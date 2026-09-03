@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Banking & Transaction Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-hover: #1d4ed8;
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* Top Navbar */
+        header.top-bar {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+        }
+
+        .auth-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: 1px solid transparent;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-main);
+            border-color: var(--border);
+        }
+
+        .btn-outline:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-active { background-color: #dcfce7; color: var(--success); }
+        .badge-pending { background-color: #fef3c7; color: var(--warning); }
+        .badge-rejected { background-color: #fee2e2; color: var(--danger); }
+        .badge-role { background-color: #e0e7ff; color: #4338ca; }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 28px auto;
+            padding: 0 20px;
+        }
+
+        /* Demo Credentials Quick Strip (Auth Page) */
+        .creds-banner {
+            background-color: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+        }
+
+        .creds-banner-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .creds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .cred-card {
+            background-color: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .cred-card:hover {
+            border-color: var(--primary);
+            background-color: #eff6ff;
+        }
+
+        .cred-card strong {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+
+        .cred-card span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Logged In Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            font-weight: 600;
+            border-bottom-color: var(--primary);
+        }
+
+        /* Tab Content Panels */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Card Layout */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            outline: none;
+            background-color: #ffffff;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
+        }
+
+        /* Tables */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            margin-top: 10px;
+        }
+
+        table.data-table th {
+            text-align: left;
+            padding: 10px 14px;
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table.data-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Console Output */
+        pre.console {
+            background-color: #0f172a;
+            color: #38bdf8;
+            padding: 16px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.8rem;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Main View Sections */
+        #authView {
+            display: block;
+        }
+
+        #appView {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="top-bar">
+        <div class="brand">Digital Banking & Transaction System</div>
+        <div class="auth-status-bar" id="authNav">
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Not signed in</span>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: AUTHENTICATION & DEMO CREDENTIALS  -->
+        <!-- (Shown ONLY when logged out)               -->
+        <!-- ========================================== -->
+        <div id="authView">
+            <!-- Demo Account Quick Sign-In (Indian Names) -->
+            <div class="creds-banner">
+                <div class="creds-banner-title">Demo Accounts (Click Any Account to Sign In Instantly)</div>
+                <div class="creds-grid">
+                    <div class="cred-card" onclick="quickLogin('aarav.mehta@example.com', 'Customer@123')">
+                        <strong>Aarav Mehta</strong>
+                        <span>Customer (KYC Approved)</span>
+                        <span>aarav.mehta@example.com</span>
+                    </div>
+                    <div class="cred-card" onclick="quickLogin('priya.sharma@example.com', 'Customer@123')">
+                        <strong>Priya Sharma</strong>
+                        <span>Customer (KYC Approved)</span>
+                        <span>priya.sharma@example.com</span>
+                    </div>
+                    <div class="cred-card" onclick="quickLogin('ananya.iyer@example.com', 'Customer@123')">
+                        <strong>Ananya Iyer</strong>
+                        <span>Customer (Pending Review)</span>
+                        <span>ananya.iyer@example.com</span>
+                    </div>
+                    <div class="cred-card" onclick="quickLogin('staff@bank.com', 'Staff@123')">
+                        <strong>Pooja Deshmukh</strong>
+                        <span>Staff Review Officer</span>
+                        <span>staff@bank.com</span>
+                    </div>
+                    <div class="cred-card" onclick="quickLogin('admin@bank.com', 'Admin@123')">
+                        <strong>Rajesh Sharma</strong>
+                        <span>Administrator</span>
+                        <span>admin@bank.com</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auth Forms Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px;">
+                <!-- Sign In Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Sign In</div>
+                    </div>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label>Email Address</label>
+                            <input type="email" id="loginEmail" value="aarav.mehta@example.com" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 18px;">
+                            <label>Password</label>
+                            <input type="password" id="loginPassword" value="Customer@123" required>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">Sign In</button>
+                    </form>
+                </div>
+
+                <!-- Registration Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Register Customer Account (KYC)</div>
+                    </div>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" id="regName" placeholder="Rohan Verma" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" id="regEmail" placeholder="rohan.verma@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" id="regPassword" placeholder="Minimum 6 characters" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="text" id="regPhone" placeholder="+91-98765-43210">
+                            </div>
+                            <div class="form-group">
+                                <label>ID Document Type</label>
+                                <select id="regDocType">
+                                    <option value="passport">Passport</option>
+                                    <option value="drivers_license">Driver's License</option>
+                                    <option value="national_id">Aadhaar / National ID</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>ID Document Number</label>
+                                <input type="text" id="regDocNum" placeholder="P-98765432">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-outline" style="width: 100%;">Register Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: LOGGED-IN BANKING DASHBOARD        -->
+        <!-- (Shown ONLY after successful login)        -->
+        <!-- ========================================== -->
+        <div id="appView">
+            <!-- Navigation Tabs -->
+            <div class="tabs" id="tabBar">
+                <!-- Injected dynamically based on role -->
+            </div>
+
+            <!-- TAB 1: PROFILE & KYC -->
+            <div class="tab-panel" id="profileTab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">User Profile & KYC Verification Details</div>
+                        <button class="btn btn-outline" onclick="fetchProfile()">Refresh Profile</button>
+                    </div>
+                    <div id="profileContainer">
+                        <p style="color: var(--text-muted);">Loading profile...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: ACCOUNTS -->
+            <div class="tab-panel" id="accountsTab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Apply for a New Account</div>
+                    </div>
+                    <form onsubmit="handleApplyAccount(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Account Type</label>
+                                <select id="accType">
+                                    <option value="savings">Savings (₹10,000 Minimum Balance)</option>
+                                    <option value="current">Current (₹50,000 Minimum Balance)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Initial Deposit (₹)</label>
+                                <input type="number" id="accDeposit" value="50000" min="0" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Submit Account Application</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Registered Accounts</div>
+                        <button class="btn btn-outline" onclick="fetchAccounts()">Refresh Accounts</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Account Number</th>
+                                <th>Type</th>
+                                <th>Balance</th>
+                                <th>Daily Transfer Limit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accountsTableBody">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No accounts found.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 3: BENEFICIARIES -->
+            <div class="tab-panel" id="beneficiariesTab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Add Beneficiary</div>
+                    </div>
+                    <form onsubmit="handleAddBeneficiary(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Source Account ID</label>
+                                <input type="text" id="benSourceAccId" placeholder="Account ID" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Beneficiary Account Number</label>
+                                <input type="text" id="benTargetAccNum" placeholder="e.g. 1012345678" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nickname</label>
+                                <input type="text" id="benNickname" placeholder="e.g. Priya Savings" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Save Beneficiary</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Whitelisted Beneficiaries</div>
+                        <button class="btn btn-outline" onclick="fetchBeneficiaries()">Refresh</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nickname</th>
+                                <th>Account Number</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="beneficiariesTableBody">
+                            <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No beneficiaries registered.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 4: STAFF APPROVAL QUEUE -->
+            <div class="tab-panel" id="staffTab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Staff Account Approval Queue</div>
+                        <button class="btn btn-outline" onclick="fetchPendingAccounts()">Refresh Queue</button>
+                    </div>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 16px;">
+                        Review incoming customer account applications and register approval or rejection decisions.
+                    </p>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Account Number</th>
+                                <th>Applicant</th>
+                                <th>Type</th>
+                                <th>Initial Balance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingTableBody">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No pending applications in queue.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 5: CONSOLE -->
+            <div class="tab-panel" id="consoleTab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Live API Console</div>
+                        <button class="btn btn-outline" onclick="clearLogs()">Clear Console</button>
+                    </div>
+                    <pre class="console" id="apiLogs">System ready. API events will appear here.</pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Frontend Script -->
+    <script>
+        const API_BASE = window.location.port === '3000' ? 'http://localhost:5000/api' : '/api';
+        let authToken = localStorage.getItem('token') || '';
+        let currentUser = null;
+
+        function renderTabs() {
+            const tabBar = document.getElementById('tabBar');
+            if (!currentUser) {
+                tabBar.innerHTML = '';
+                return;
+            }
+
+            if (currentUser.role === 'staff' || currentUser.role === 'admin') {
+                tabBar.innerHTML = `
+                    <button class="tab-btn active" id="btn-staffTab" onclick="switchTab('staffTab')">Staff Review Queue</button>
+                    <button class="tab-btn" id="btn-accountsTab" onclick="switchTab('accountsTab')">All Accounts</button>
+                    <button class="tab-btn" id="btn-profileTab" onclick="switchTab('profileTab')">User Profile</button>
+                    <button class="tab-btn" id="btn-consoleTab" onclick="switchTab('consoleTab')">API Console</button>
+                `;
+            } else {
+                tabBar.innerHTML = `
+                    <button class="tab-btn active" id="btn-profileTab" onclick="switchTab('profileTab')">User Profile & KYC</button>
+                    <button class="tab-btn" id="btn-accountsTab" onclick="switchTab('accountsTab')">Accounts & Application</button>
+                    <button class="tab-btn" id="btn-beneficiariesTab" onclick="switchTab('beneficiariesTab')">Beneficiaries</button>
+                    <button class="tab-btn" id="btn-consoleTab" onclick="switchTab('consoleTab')">API Console</button>
+                `;
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+            const targetPanel = document.getElementById(tabId);
+            if (targetPanel) targetPanel.classList.add('active');
+
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (tabId === 'profileTab' && authToken) fetchProfile();
+            if (tabId === 'accountsTab' && authToken) fetchAccounts();
+            if (tabId === 'beneficiariesTab' && authToken) fetchBeneficiaries();
+            if (tabId === 'staffTab' && authToken) fetchPendingAccounts();
+        }
+
+        function updateViewState() {
+            const authView = document.getElementById('authView');
+            const appView = document.getElementById('appView');
+            const authNav = document.getElementById('authNav');
+
+            if (currentUser && authToken) {
+                authView.style.display = 'none';
+                appView.style.display = 'block';
+
+                authNav.innerHTML = `
+                    <span style="font-size: 0.85rem; font-weight: 500;">${currentUser.name}</span>
+                    <span class="badge badge-role">${currentUser.role}</span>
+                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;" onclick="logout()">Sign Out</button>
+                `;
+
+                renderTabs();
+                if (currentUser.role === 'staff' || currentUser.role === 'admin') {
+                    switchTab('staffTab');
+                } else {
+                    switchTab('profileTab');
+                }
+            } else {
+                authView.style.display = 'block';
+                appView.style.display = 'none';
+                authNav.innerHTML = `<span style="font-size: 0.85rem; color: var(--text-muted);">Not signed in</span>`;
+            }
+        }
+
+        function logAPI(method, endpoint, status, response) {
+            const box = document.getElementById('apiLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${method} ${endpoint} -> Status ${status}\n${JSON.stringify(response, null, 2)}\n\n`;
+            if (box) box.textContent = logEntry + box.textContent;
+        }
+
+        function clearLogs() {
+            document.getElementById('apiLogs').textContent = 'Console cleared.';
+        }
+
+        async function quickLogin(email, password) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+            await handleLogin({ preventDefault: () => {} });
+        }
+
+        async function handleLogin(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                logAPI('POST', '/api/auth/login', res.status, data);
+
+                if (data.success) {
+                    authToken = data.data.token;
+                    localStorage.setItem('token', authToken);
+                    currentUser = data.data.user;
+                    updateViewState();
+                } else {
+                    alert(`Login Failed: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const body = {
+                name: document.getElementById('regName').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                phone: document.getElementById('regPhone').value,
+                idDocumentType: document.getElementById('regDocType').value,
+                idDocumentNumber: document.getElementById('regDocNum').value
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                logAPI('POST', '/api/auth/register', res.status, data);
+
+                if (data.success) {
+                    alert('Registration successful! Signing in automatically...');
+                    quickLogin(body.email, body.password);
+                } else {
+                    alert(`Registration Failed: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function fetchProfile() {
+            if (!authToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/users/me`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', '/api/users/me', res.status, data);
+
+                if (data.success) {
+                    const u = data.data.user;
+                    const container = document.getElementById('profileContainer');
+                    container.innerHTML = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.9rem;">
+                            <div><strong>Name:</strong> ${u.name}</div>
+                            <div><strong>Email:</strong> ${u.email}</div>
+                            <div><strong>Role:</strong> <span class="badge badge-role">${u.role}</span></div>
+                            <div><strong>KYC Status:</strong> <span class="badge badge-${u.kycStatus === 'approved' ? 'active' : 'pending'}">${u.kycStatus}</span></div>
+                            <div><strong>Phone:</strong> ${u.phone || 'N/A'}</div>
+                            <div><strong>ID Document:</strong> ${u.idDocumentType || 'N/A'} (${u.idDocumentNumber || 'N/A'})</div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function fetchAccounts() {
+            if (!authToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/accounts`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', '/api/accounts', res.status, data);
+
+                const tbody = document.getElementById('accountsTableBody');
+                tbody.innerHTML = '';
+
+                const accounts = data.data.accounts || data.data.items || [];
+                if (accounts.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No accounts found.</td></tr>`;
+                    return;
+                }
+
+                accounts.forEach(acc => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${acc.accountNumber}</strong><br><small style="color: var(--text-muted); font-size:0.75rem;">${acc._id}</small></td>
+                        <td style="text-transform: capitalize;">${acc.type}</td>
+                        <td>$${(acc.balance || 0).toLocaleString()}</td>
+                        <td>$${(acc.dailyTransferLimit || 0).toLocaleString()}</td>
+                        <td><span class="badge badge-${acc.status}">${acc.status}</span></td>
+                    `;
+                    tr.onclick = () => {
+                        const targetInput = document.getElementById('benSourceAccId');
+                        if (targetInput) targetInput.value = acc._id;
+                    };
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function handleApplyAccount(e) {
+            e.preventDefault();
+            if (!authToken) return alert('Please sign in first.');
+
+            const body = {
+                type: document.getElementById('accType').value,
+                initialDeposit: Number(document.getElementById('accDeposit').value),
+                dailyTransferLimit: 50000
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/accounts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                logAPI('POST', '/api/accounts', res.status, data);
+
+                if (data.success) {
+                    alert('Account application submitted. Status is pending staff review.');
+                    fetchAccounts();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function fetchPendingAccounts() {
+            if (!authToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/staff/pending-accounts`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', '/api/staff/pending-accounts', res.status, data);
+
+                const tbody = document.getElementById('pendingTableBody');
+                tbody.innerHTML = '';
+
+                const accounts = (data.data && data.data.items) ? data.data.items : [];
+                if (accounts.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No pending applications in queue.</td></tr>`;
+                    return;
+                }
+
+                accounts.forEach(acc => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${acc.accountNumber}</strong></td>
+                        <td>${acc.userId?.name || 'Applicant'}</td>
+                        <td style="text-transform: capitalize;">${acc.type}</td>
+                        <td>$${(acc.balance || 0).toLocaleString()}</td>
+                        <td>
+                            <button class="btn" style="padding: 4px 10px; font-size: 0.75rem; margin-right: 4px;" onclick="reviewAccount('${acc._id}', 'Approved')">Approve</button>
+                            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="reviewAccount('${acc._id}', 'Rejected')">Reject</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function reviewAccount(id, decision) {
+            const remarks = prompt(`Enter remarks for ${decision}:`, `Verified documentation. ${decision}.`);
+            if (remarks === null) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/accounts/${id}/approve`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ status: decision, remarks })
+                });
+                const data = await res.json();
+                logAPI('PUT', `/api/accounts/${id}/approve`, res.status, data);
+
+                if (data.success) {
+                    alert(`Account ${decision}.`);
+                    fetchPendingAccounts();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function fetchBeneficiaries() {
+            if (!authToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/beneficiaries`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', '/api/beneficiaries', res.status, data);
+
+                const tbody = document.getElementById('beneficiariesTableBody');
+                tbody.innerHTML = '';
+
+                const bens = (data.data && data.data.beneficiaries) ? data.data.beneficiaries : [];
+                if (bens.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No beneficiaries registered.</td></tr>`;
+                    return;
+                }
+
+                bens.forEach(b => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${b.nickname}</strong></td>
+                        <td>${b.beneficiaryAccountNumber}</td>
+                        <td>
+                            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="deleteBeneficiary('${b._id}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function handleAddBeneficiary(e) {
+            e.preventDefault();
+            const body = {
+                accountId: document.getElementById('benSourceAccId').value,
+                beneficiaryAccountNumber: document.getElementById('benTargetAccNum').value,
+                nickname: document.getElementById('benNickname').value
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/beneficiaries`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                logAPI('POST', '/api/beneficiaries', res.status, data);
+
+                if (data.success) {
+                    alert('Beneficiary registered.');
+                    fetchBeneficiaries();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function deleteBeneficiary(id) {
+            if (!confirm('Remove this beneficiary?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/beneficiaries/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('DELETE', `/api/beneficiaries/${id}`, res.status, data);
+
+                if (data.success) {
+                    alert('Beneficiary deleted.');
+                    fetchBeneficiaries();
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            authToken = '';
+            currentUser = null;
+            updateViewState();
+        }
+
+        // Initialize view on load
+        (async function init() {
+            if (authToken) {
+                try {
+                    const res = await fetch(`${API_BASE}/users/me`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        currentUser = data.data.user;
+                        updateViewState();
+                        return;
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            logout();
+        })();
+    </script>
+</body>
+</html>
