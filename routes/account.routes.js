@@ -21,11 +21,17 @@ router.put(
 );
 
 // ==========================================
-// STUBS FOR TEAMMATES
+// SPRINT 2 - TRANSACTIONS & STATEMENTS
 // ==========================================
-// [STUB - Member 2: Transactions & Statements]
-router.get('/:id/statement', accountController.getStatementStub);
+// Module 6 - Transaction Ledger (paginated, newest first)
+router.get('/:id/transactions', accountController.getAccountTransactions);
 
+// Module 6 - Account Statement Generation
+router.get('/:id/statement', accountController.getAccountStatement);
+
+// ==========================================
+// STUBS FOR TEAMMATES (MEMBER 3)
+// ==========================================
 // [STUB - Member 3: Account Controls]
 router.put('/:id/freeze', restrictTo('staff', 'admin'), accountController.freezeAccountStub);
 router.put('/:id/unfreeze', restrictTo('staff', 'admin'), accountController.unfreezeAccountStub);
