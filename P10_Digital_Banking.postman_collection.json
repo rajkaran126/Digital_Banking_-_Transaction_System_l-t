@@ -50,8 +50,12 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["health"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
         }
       }
     },
@@ -96,8 +100,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             }
           }
         },
@@ -117,8 +126,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             }
           }
         },
@@ -156,8 +170,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             }
           }
         },
@@ -194,8 +213,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             }
           }
         },
@@ -215,8 +239,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             }
           }
         }
@@ -237,8 +266,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
             }
           }
         },
@@ -249,8 +283,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
             }
           }
         },
@@ -274,8 +313,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
             }
           }
         },
@@ -299,8 +343,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
             }
           }
         }
@@ -343,8 +392,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/accounts",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ]
             }
           }
         },
@@ -360,8 +413,12 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/accounts",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ]
             }
           }
         },
@@ -377,8 +434,12 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/accounts?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -404,8 +465,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/accounts/{{accountId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts", "{{accountId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}"
+              ]
             }
           }
         },
@@ -421,8 +487,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/accounts/{{accountId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts", "{{accountId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}"
+              ]
             }
           }
         },
@@ -438,8 +509,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/accounts/507f1f77bcf86cd799439011",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts", "507f1f77bcf86cd799439011"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "507f1f77bcf86cd799439011"
+              ]
             }
           }
         },
@@ -463,8 +539,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/accounts/{{accountId}}/approve",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts", "{{accountId}}", "approve"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "approve"
+              ]
             }
           }
         },
@@ -488,8 +570,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/accounts/{{accountId}}/approve",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts", "{{accountId}}", "approve"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "approve"
+              ]
             }
           }
         },
@@ -513,8 +601,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/accounts/{{accountId}}/approve",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts", "{{accountId}}", "approve"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "approve"
+              ]
             }
           }
         }
@@ -557,8 +651,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/beneficiaries",
-              "host": ["{{baseUrl}}"],
-              "path": ["beneficiaries"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "beneficiaries"
+              ]
             }
           }
         },
@@ -582,8 +680,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/beneficiaries",
-              "host": ["{{baseUrl}}"],
-              "path": ["beneficiaries"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "beneficiaries"
+              ]
             }
           }
         },
@@ -607,8 +709,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/beneficiaries",
-              "host": ["{{baseUrl}}"],
-              "path": ["beneficiaries"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "beneficiaries"
+              ]
             }
           }
         },
@@ -632,8 +738,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/beneficiaries",
-              "host": ["{{baseUrl}}"],
-              "path": ["beneficiaries"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "beneficiaries"
+              ]
             }
           }
         },
@@ -649,8 +759,12 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/beneficiaries",
-              "host": ["{{baseUrl}}"],
-              "path": ["beneficiaries"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "beneficiaries"
+              ]
             }
           }
         },
@@ -666,8 +780,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/beneficiaries/{{beneficiaryId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["beneficiaries", "{{beneficiaryId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "beneficiaries",
+                "{{beneficiaryId}}"
+              ]
             }
           }
         }
@@ -688,8 +807,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/staff/pending-accounts",
-              "host": ["{{baseUrl}}"],
-              "path": ["staff", "pending-accounts"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "pending-accounts"
+              ]
             }
           }
         },
@@ -705,18 +829,46 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/staff/pending-accounts",
-              "host": ["{{baseUrl}}"],
-              "path": ["staff", "pending-accounts"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "pending-accounts"
+              ]
             }
           }
         }
       ]
     },
     {
-      "name": "6. Teammate Stubs (501 Server Error Not Implemented)",
+      "name": "6. Fund Transfers, Ledger & Account Statements (Sprint 2)",
       "item": [
         {
-          "name": "[STUB - Member 2] Transfer Funds (501)",
+          "name": "Transfer Funds (Happy Path - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Success is true', function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "pm.test('Transfer details and transactions returned', function () {",
+                  "    pm.expect(jsonData.data.transfer).to.be.an('object');",
+                  "    pm.expect(jsonData.data.transfer.amount).to.eql(500);",
+                  "    pm.expect(jsonData.data.debitTransaction.type).to.eql('debit');",
+                  "    pm.expect(jsonData.data.creditTransaction.type).to.eql('credit');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -731,17 +883,413 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sourceAccountId\": \"{{accountId}}\",\n  \"destinationAccountNumber\": \"1012345678\",\n  \"amount\": 500\n}"
+              "raw": "{\n  \"fromAccountId\": \"{{accountId}}\",\n  \"toAccountNumber\": \"1012345678\",\n  \"amount\": 500,\n  \"description\": \"Routine payment transfer\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/transactions/transfer",
-              "host": ["{{baseUrl}}"],
-              "path": ["transactions", "transfer"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
             }
           }
         },
         {
-          "name": "[STUB - Member 2] Account Statement (501)",
+          "name": "Transfer Funds - Insufficient Balance (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Error code is VALIDATION_ERROR', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{accountId}}\",\n  \"toAccountNumber\": \"1012345678\",\n  \"amount\": 9999999\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transfer Funds - Breach Minimum Balance (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Error code is VALIDATION_ERROR', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{accountId}}\",\n  \"toAccountNumber\": \"1012345678\",\n  \"amount\": 24800\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transfer Funds - Transfer to Frozen or Pending Account (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Error code is CONFLICT', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('CONFLICT');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{accountId}}\",\n  \"toAccountNumber\": \"2098765432\",\n  \"amount\": 500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transfer Funds - Unauthenticated (401 Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Error code is UNAUTHORIZED', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('UNAUTHORIZED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{accountId}}\",\n  \"toAccountNumber\": \"1012345678\",\n  \"amount\": 500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transfer Funds - Wrong Owner (403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Error code is FORBIDDEN', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('FORBIDDEN');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{accountId}}\",\n  \"toAccountNumber\": \"1012345678\",\n  \"amount\": 500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transfer Funds - Invalid Account ID (404 Not Found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Error code is NOT_FOUND', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('NOT_FOUND');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"507f1f77bcf86cd799439011\",\n  \"toAccountNumber\": \"1012345678\",\n  \"amount\": 500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transfer Funds - Daily Limit Exceeded (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Error code is VALIDATION_ERROR', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{accountId}}\",\n  \"toAccountNumber\": \"1012345678\",\n  \"amount\": 60000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transfer Funds - Suspicious Large Amount Flagged (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Transaction is flagged true', function () {",
+                  "    pm.expect(jsonData.data.transfer.flagged).to.be.true;",
+                  "    pm.expect(jsonData.data.debitTransaction.flagged).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{accountId}}\",\n  \"toAccountNumber\": \"1012345678\",\n  \"amount\": 15000,\n  \"description\": \"Large corporate settlement\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/transfer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "transfer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Account Transactions - Ledger (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Paginated transaction items returned', function () {",
+                  "    pm.expect(jsonData.data.items).to.be.an('array');",
+                  "    pm.expect(jsonData.data.pagination).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -751,12 +1299,187 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/accounts/{{accountId}}/statement",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts", "{{accountId}}", "statement"]
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/transactions?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
             }
           }
         },
+        {
+          "name": "Get Account Statement - Happy Path with Summary (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Statement summary contains opening and closing balances', function () {",
+                  "    pm.expect(jsonData.data.summary.openingBalance).to.be.a('number');",
+                  "    pm.expect(jsonData.data.summary.closingBalance).to.be.a('number');",
+                  "    pm.expect(jsonData.data.summary.totalDebits).to.be.a('number');",
+                  "    pm.expect(jsonData.data.summary.totalCredits).to.be.a('number');",
+                  "    pm.expect(jsonData.data.transactions).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/statement?from=2026-01-01&to=2026-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "statement"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Account Statement - Invalid Date Range (400 Bad Request)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Error code is VALIDATION_ERROR', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('VALIDATION_ERROR');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/statement?from=2026-12-31&to=2026-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "statement"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Account Statement - Empty Range (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Empty transactions array returned', function () {",
+                  "    pm.expect(jsonData.data.transactions).to.be.an('array').that.is.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/statement?from=2030-01-01&to=2030-01-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "statement"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2030-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2030-01-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Teammate Stubs (Member 3 - 501 Server Error Not Implemented)",
+      "item": [
         {
           "name": "[STUB - Member 3] Freeze Account (501)",
           "request": {
@@ -769,8 +1492,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/accounts/{{accountId}}/freeze",
-              "host": ["{{baseUrl}}"],
-              "path": ["accounts", "{{accountId}}", "freeze"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "freeze"
+              ]
             }
           }
         },
@@ -786,8 +1515,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/staff/flagged-transactions",
-              "host": ["{{baseUrl}}"],
-              "path": ["staff", "flagged-transactions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "flagged-transactions"
+              ]
             }
           }
         },
@@ -803,8 +1537,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/staff/dashboard",
-              "host": ["{{baseUrl}}"],
-              "path": ["staff", "dashboard"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "dashboard"
+              ]
             }
           }
         }

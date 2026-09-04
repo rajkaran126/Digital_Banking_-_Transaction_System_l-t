@@ -197,17 +197,18 @@ project-root/
 
 | Module | Scope / Description | Owner | Status |
 |---|---|---|---|
-| **Module 1** | **Customer Onboarding & KYC Capture** (Register, Login, Get/Update KYC Profile with Approval Lock) | **Foundation (You)** | **Implemented & Tested** |
-| **Module 2** | **Account Approval Workflow** (Account Application, Staff Pending Queue, Approval/Rejection with Audit Log & Conflict Checks) | **Foundation (You)** | **Implemented & Tested** |
-| **Module 3** | **Account Management** (List Own Accounts / Paginated All for Staff, Get Account Details with Ownership Verification) | **Foundation (You)** | **Implemented & Tested** |
-| **Module 4** | **Beneficiary Management** (Add Beneficiary with Active Check & Ownership Check, List Beneficiaries, Delete Beneficiary) | **Foundation (You)** | **Implemented & Tested** |
-| **Module 5** | **Fund Transfers & Transaction Processing** (`POST /api/transactions/transfer`, Ledger Records, Balance Check) | **Member 2** | **Stubbed (`501 Not Implemented`)** |
-| **Module 6** | **Account Statements & Freeze Controls** (`GET /api/accounts/:id/statement`, `PUT /api/accounts/:id/freeze`, `unfreeze`) | **Member 2 / Member 3** | **Stubbed (`501 Not Implemented`)** |
+| **Module 1** | **Customer Onboarding & KYC Capture** (Register, Login, Get/Update KYC Profile with Approval Lock) | **Foundation** | **Implemented & Tested** |
+| **Module 2** | **Account Approval Workflow** (Account Application, Staff Pending Queue, Approval/Rejection with Audit Log & Conflict Checks) | **Foundation** | **Implemented & Tested** |
+| **Module 3** | **Account Management** (List Own Accounts / Paginated All for Staff, Get Account Details with Ownership Verification) | **Foundation** | **Implemented & Tested** |
+| **Module 4** | **Beneficiary Management** (Add Beneficiary with Active Check & Ownership Check, List Beneficiaries, Delete Beneficiary) | **Foundation** | **Implemented & Tested** |
+| **Module 5** | **Fund Transfers & Transaction Processing** (`POST /api/transactions/transfer`, Ledger Records, Balance & Limit Checks) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
+| **Module 6** | **Transaction Ledger & Account Statements** (`GET /api/accounts/:id/transactions`, `GET /api/accounts/:id/statement`) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
 | **Module 7** | **Staff Flagged Transactions & Analytics Dashboard** (`GET /api/staff/flagged-transactions`, `GET /api/staff/dashboard`) | **Member 3** | **Stubbed (`501 Not Implemented`)** |
+| **Module 8** | **Minimum Balance & Limits Enforcement** (Integrated inside transfer engine and account balance validation) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
 
 ---
 
-## API Documentation (Implemented Foundation Routes)
+## API Documentation (Implemented Foundation & Sprint 2 Routes)
 
 ### 1. Authentication & Onboarding
 | Method | Endpoint | Access | Request Body | Status Codes | Description |
@@ -226,7 +227,7 @@ project-root/
 |---|---|---|---|---|---|
 | `POST` | `/api/accounts` | Customer / Auth | `{ type: "savings"\|"current", initialDeposit?, dailyTransferLimit? }` | `201`, `400`, `401` | Customer applies for a bank account (`status: "pending"`). Unique account number generated. |
 | `GET` | `/api/accounts` | Authenticated | Query: `?page=1&limit=10&status=&type=` | `200`, `401` | Customers receive their own accounts; Staff/Admin receive all accounts paginated with total counts. |
-| `GET` | `/api/accounts/:id` | Owner / Staff / Admin | None | `200`, `401`, `403`, `404` | Retrieves account details. Returns **403 Forbidden** if a customer attempts to view an account they do not own. |
+| `GET` | `/api/accounts/:id` | Owner / Staff / Admin | None | `200`, `401`, `403`, `404` | Retrieves account details including `minimumBalance` and `dailyTransferLimit`. Returns **403 Forbidden** if a customer attempts to view an account they do not own. |
 | `PUT` | `/api/accounts/:id/approve` | Staff / Admin | `{ status: "Approved"\|"Rejected", remarks? }` | `200`, `400`, `401`, `403`, `404`, `409` | Staff approves or rejects a pending account. Updates status to `active`/`rejected`, logs an `Approval` record. Returns **409 Conflict** if account is not `pending`. |
 
 ### 4. Beneficiary Management
@@ -240,6 +241,13 @@ project-root/
 | Method | Endpoint | Access | Request Body | Status Codes | Description |
 |---|---|---|---|---|---|
 | `GET` | `/api/staff/pending-accounts` | Staff / Admin | Query: `?page=1&limit=10` | `200`, `401`, `403` | Lists all pending account applications awaiting review. |
+
+### 6. Fund Transfers, Ledger & Account Statements (Sprint 2)
+| Method | Endpoint | Access | Request Body | Status Codes | Description |
+|---|---|---|---|---|---|
+| `POST` | `/api/transactions/transfer` | Customer (Owner) | `{ fromAccountId, toAccountNumber, amount, description? }` | `200`, `400`, `401`, `403`, `404`, `409` | Executes atomic fund transfer via Mongoose session transaction (`session.withTransaction`). Enforces account ownership, active status on both ends, sufficient balance, minimum balance requirement (Module 8), and daily transfer limit. Flags transactions exceeding \$10,000 threshold for compliance (Module 9). Atomically records matching debit and credit ledger documents. |
+| `GET` | `/api/accounts/:id/transactions` | Owner / Staff / Admin | Query: `?page=1&limit=10` | `200`, `401`, `403`, `404` | Retrieves paginated transactions for the specified account in reverse chronological order (newest first). Strictly ownership-guarded for customers. |
+| `GET` | `/api/accounts/:id/statement` | Owner / Staff / Admin | Query: `?from=YYYY-MM-DD&to=YYYY-MM-DD` | `200`, `400`, `401`, `403`, `404` | Generates official account statement for the given ISO date range. Returns transaction stream, computed `openingBalance`, `closingBalance`, `totalDebits`, `totalCredits`, and `netChange`. Returns empty array if no transactions in range. |
 
 ---
 
@@ -277,8 +285,17 @@ project-root/
 | `401` | `UNAUTHORIZED` | Missing or invalid JWT token, bad credentials |
 | `403` | `FORBIDDEN` | RBAC role mismatch, resource ownership denial |
 | `404` | `NOT_FOUND` | Missing account, beneficiary, user, or route |
-| `409` | `CONFLICT` | Duplicate email, duplicate beneficiary, editing approved KYC, approving non-pending account |
+| `409` | `CONFLICT` | Duplicate email, duplicate beneficiary, editing approved KYC, approving non-pending account, non-active transfer accounts |
+| `409` | `VALIDATION_ERROR` | Insufficient funds, breaching minimum balance requirement, daily transfer limit exceeded |
 | `500` / `501` | `SERVER_ERROR` | Internal server errors, unhandled exceptions, stub endpoints |
+
+### 4. Transfer Atomicity & ACID Transaction Architecture
+In enterprise digital banking systems, moving funds between accounts represents a high-stakes mutation where partial execution cannot be tolerated. A manual two-step update (`Account.updateOne` debit followed by a separate `Account.updateOne` credit) is fragile: if the Node.js process crashes, the database disconnects, or a runtime failure occurs between the debit and credit, the sender loses money while the recipient never receives it, creating severe ledger discrepancies.
+
+To provide non-negotiable ACID (Atomicity, Consistency, Isolation, Durability) guarantees, our transfer engine uses Mongoose client sessions with native MongoDB multi-document transactions (`session.withTransaction`). Under this pattern, re-fetching both accounts under write locks, validating minimum balance and status constraints, deducting the source balance, crediting the destination balance, and writing both immutable ledger records (one debit, one credit) execute inside an isolated transaction. If any operation or validation fails, MongoDB automatically aborts and rolls back the entire session, ensuring zero orphaned debits or balance mismatches. (In development environments using standalone MongoDB instances without replica sets, an automated compensation pattern immediately refunds the debited balance if downstream operations fail).
+
+### 5. Transaction Ledger Immutability
+> **Transaction Ledger Immutability Note**: Financial ledgers are strictly immutable, append-only transaction streams; no `PUT`, `PATCH`, or `DELETE` routes exist or will ever be created for the transactions collection to guarantee an indisputable regulatory audit trail.
 
 ---
 
@@ -377,9 +394,23 @@ Import `P10_Digital_Banking.postman_collection.json` into Postman.
   - Querying non-existent account ID
   - Adding a non-existent beneficiary account number
   - Requesting an unmapped URL
-- [x] **Teammate Stubs (501 `SERVER_ERROR`):**
-  - `POST /api/transactions/transfer`
-  - `GET /api/accounts/:id/statement`
+- [x] **Sprint 2 Fund Transfers, Ledger & Statements:**
+  - `POST /api/transactions/transfer` $\to$ 200 OK (atomic balance debit/credit and dual ledger generation)
+  - `POST /api/transactions/transfer` with amount > 10,000 $\to$ 200 OK with `flagged: true`
+  - `POST /api/transactions/transfer` insufficient balance $\to$ 409 Conflict with `VALIDATION_ERROR`
+  - `POST /api/transactions/transfer` breaching minimum balance $\to$ 409 Conflict with `VALIDATION_ERROR`
+  - `POST /api/transactions/transfer` exceeding daily transfer limit $\to$ 409 Conflict with `VALIDATION_ERROR`
+  - `POST /api/transactions/transfer` with non-active account (pending/frozen) $\to$ 409 Conflict with `CONFLICT`
+  - `POST /api/transactions/transfer` unauthenticated $\to$ 401 Unauthorized
+  - `POST /api/transactions/transfer` wrong-owner source account $\to$ 403 Forbidden
+  - `POST /api/transactions/transfer` non-existent source/destination account $\to$ 404 Not Found
+  - `GET /api/accounts/:id/transactions` $\to$ 200 OK with paginated, reverse-chronological transaction stream
+  - `GET /api/accounts/:id/transactions` wrong-owner $\to$ 403 Forbidden
+  - `GET /api/accounts/:id/statement` $\to$ 200 OK with computed opening balance, closing balance, debits, credits, and net change
+  - `GET /api/accounts/:id/statement` invalid date range ($from > to$) $\to$ 400 Validation Error
+  - `GET /api/accounts/:id/statement` empty range $\to$ 200 OK with empty array
+  - Immutability check: `PUT`/`DELETE /api/transactions/:id` $\to$ 404 Not Found
+- [x] **Remaining Teammate Stubs (501 `SERVER_ERROR`):**
   - `PUT /api/accounts/:id/freeze`
   - `GET /api/staff/flagged-transactions`
   - `GET /api/staff/dashboard`

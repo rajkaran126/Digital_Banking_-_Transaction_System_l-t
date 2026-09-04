@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const Account = require('../models/Account');
 const Approval = require('../models/Approval');
+const Transaction = require('../models/Transaction');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { getPagination, formatPaginatedResponse } = require('../utils/pagination');
@@ -188,18 +190,217 @@ const approveAccount = catchAsync(async (req, res, next) => {
 });
 
 // ==========================================
-// STUB CONTROLLERS FOR TEAMMATES (MEMBER 2 / MEMBER 3)
+// SPRINT 2 - TRANSACTIONS & STATEMENTS
 // ==========================================
 
 /**
- * @desc    [STUB - Member 2] Get account statement / transaction history
+ * @desc    Get paginated account transactions (Module 6 - Ledger)
+ * @route   GET /api/accounts/:id/transactions
+ * @access  Private (Owner customer or Staff/Admin)
+ */
+const getAccountTransactions = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError(`Account not found with id: ${id}`, 404, 'NOT_FOUND'));
+  }
+
+  const account = await Account.findById(id);
+  if (!account) {
+    return next(new AppError('Account not found.', 404, 'NOT_FOUND'));
+  }
+
+  // Ownership verification check: Customers can only view their own account transactions
+  if (req.user.role === 'customer' && account.userId.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError('Access denied. You do not have permission to view transactions for this account.', 403, 'FORBIDDEN')
+    );
+  }
+
+  const { page, limit, skip } = getPagination(req.query);
+
+  const [transactions, total] = await Promise.all([
+    Transaction.find({ accountId: account._id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Transaction.countDocuments({ accountId: account._id })
+  ]);
+
+  const paginatedResult = formatPaginatedResponse(transactions, total, page, limit);
+
+  res.status(200).json({
+    success: true,
+    message: 'Account transactions retrieved successfully.',
+    data: paginatedResult
+  });
+});
+
+/**
+ * @desc    Get account statement / transaction history with opening & closing balances
  * @route   GET /api/accounts/:id/statement
+ * @access  Private (Owner customer or Staff/Admin)
+ */
+const getAccountStatement = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError(`Account not found with id: ${id}`, 404, 'NOT_FOUND'));
+  }
+
+  const account = await Account.findById(id);
+  if (!account) {
+    return next(new AppError('Account not found.', 404, 'NOT_FOUND'));
+  }
+
+  // Ownership verification check: Customers can only view their own statements
+  if (req.user.role === 'customer' && account.userId.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError('Access denied. You do not have permission to view statement for this account.', 403, 'FORBIDDEN')
+    );
+  }
+
+  const { from, to } = req.query;
+
+  if (!from || !to) {
+    return next(
+      new AppError(
+        "Both 'from' and 'to' query parameters are required in ISO date format (e.g. YYYY-MM-DD).",
+        400,
+        'VALIDATION_ERROR'
+      )
+    );
+  }
+
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+
+  if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+    return next(
+      new AppError(
+        "Malformed date parameters: 'from' and 'to' must be valid ISO date strings.",
+        400,
+        'VALIDATION_ERROR'
+      )
+    );
+  }
+
+  // If 'to' is just a date like YYYY-MM-DD, set to end of day so transactions on that day are included
+  if (typeof to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(to.trim())) {
+    toDate.setHours(23, 59, 59, 999);
+  }
+
+  if (fromDate > toDate) {
+    return next(
+      new AppError(
+        "'from' date cannot be greater than 'to' date.",
+        400,
+        'VALIDATION_ERROR'
+      )
+    );
+  }
+
+  // Find all transactions in [fromDate, toDate] ordered chronologically
+  const transactions = await Transaction.find({
+    accountId: account._id,
+    createdAt: { $gte: fromDate, $lte: toDate }
+  }).sort({ createdAt: 1 });
+
+  // Compute opening balance
+  // 1. Check if there was any transaction before fromDate
+  const priorTx = await Transaction.findOne({
+    accountId: account._id,
+    createdAt: { $lt: fromDate }
+  }).sort({ createdAt: -1 });
+
+  let openingBalance;
+  if (priorTx) {
+    openingBalance = priorTx.balanceAfter;
+  } else if (transactions.length > 0) {
+    // If no prior tx, compute from first transaction in range
+    const firstTx = transactions[0];
+    openingBalance = firstTx.type === 'credit'
+      ? firstTx.balanceAfter - firstTx.amount
+      : firstTx.balanceAfter + firstTx.amount;
+  } else {
+    // No transactions in range and no transactions before fromDate.
+    // Check if there are transactions after toDate
+    const laterTx = await Transaction.findOne({
+      accountId: account._id,
+      createdAt: { $gt: toDate }
+    }).sort({ createdAt: 1 });
+
+    if (laterTx) {
+      openingBalance = laterTx.type === 'credit'
+        ? laterTx.balanceAfter - laterTx.amount
+        : laterTx.balanceAfter + laterTx.amount;
+    } else {
+      openingBalance = account.balance;
+    }
+  }
+
+  // Compute totals
+  let totalDebits = 0;
+  let totalCredits = 0;
+
+  for (const tx of transactions) {
+    if (tx.type === 'debit') {
+      totalDebits += tx.amount;
+    } else if (tx.type === 'credit') {
+      totalCredits += tx.amount;
+    }
+  }
+
+  // Compute closing balance
+  let closingBalance;
+  if (transactions.length > 0) {
+    closingBalance = transactions[transactions.length - 1].balanceAfter;
+  } else {
+    closingBalance = openingBalance;
+  }
+
+  const netChange = totalCredits - totalDebits;
+
+  res.status(200).json({
+    success: true,
+    message: 'Account statement generated successfully.',
+    data: {
+      account: {
+        id: account._id,
+        accountNumber: account.accountNumber,
+        type: account.type,
+        currentBalance: account.balance,
+        status: account.status
+      },
+      period: {
+        from: fromDate.toISOString(),
+        to: toDate.toISOString()
+      },
+      summary: {
+        openingBalance,
+        closingBalance,
+        totalDebits,
+        totalCredits,
+        netChange,
+        transactionCount: transactions.length
+      },
+      transactions
+    }
+  });
+});
+
+/**
+ * Retained stub reference for backwards compatibility
  */
 const getStatementStub = catchAsync(async (req, res, next) => {
   return next(
     new AppError('Route GET /api/accounts/:id/statement is a stub to be implemented by Member 2.', 501, 'SERVER_ERROR')
   );
 });
+
+// ==========================================
+// STUB CONTROLLERS FOR TEAMMATES (MEMBER 3)
+// ==========================================
 
 /**
  * @desc    [STUB - Member 3] Freeze account
@@ -226,6 +427,8 @@ module.exports = {
   getAccounts,
   getAccountById,
   approveAccount,
+  getAccountTransactions,
+  getAccountStatement,
   getStatementStub,
   freezeAccountStub,
   unfreezeAccountStub
