@@ -399,28 +399,100 @@ const getStatementStub = catchAsync(async (req, res, next) => {
 });
 
 // ==========================================
-// STUB CONTROLLERS FOR TEAMMATES (MEMBER 3)
+// SPRINT 3 - ACCOUNT FREEZE & UNFREEZE (MODULE 10)
 // ==========================================
 
 /**
- * @desc    [STUB - Member 3] Freeze account
+ * @desc    Freeze an active bank account (Module 10)
  * @route   PUT /api/accounts/:id/freeze
+ * @access  Private (Staff / Admin only)
  */
-const freezeAccountStub = catchAsync(async (req, res, next) => {
-  return next(
-    new AppError('Route PUT /api/accounts/:id/freeze is a stub to be implemented by Member 3.', 501, 'SERVER_ERROR')
-  );
+const freezeAccount = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError(`Account not found with id: ${id}`, 404, 'NOT_FOUND'));
+  }
+
+  const account = await Account.findById(id);
+  if (!account) {
+    return next(new AppError('Account not found.', 404, 'NOT_FOUND'));
+  }
+
+  // Enforce state transition rule: only active accounts can be frozen
+  if (account.status !== 'active') {
+    return next(
+      new AppError(
+        `Account cannot be frozen. Current status is '${account.status}'. Only 'active' accounts can be frozen.`,
+        409,
+        'CONFLICT'
+      )
+    );
+  }
+
+  const reason = req.body && req.body.reason && req.body.reason.trim()
+    ? req.body.reason.trim()
+    : 'Suspicious transaction activity';
+
+  account.status = 'frozen';
+  account.freezeReason = reason;
+  await account.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Account has been frozen successfully.',
+    data: {
+      account
+    }
+  });
 });
 
 /**
- * @desc    [STUB - Member 3] Unfreeze account
+ * @desc    Unfreeze a frozen bank account (Module 10)
  * @route   PUT /api/accounts/:id/unfreeze
+ * @access  Private (Staff / Admin only)
  */
-const unfreezeAccountStub = catchAsync(async (req, res, next) => {
-  return next(
-    new AppError('Route PUT /api/accounts/:id/unfreeze is a stub to be implemented by Member 3.', 501, 'SERVER_ERROR')
-  );
+const unfreezeAccount = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError(`Account not found with id: ${id}`, 404, 'NOT_FOUND'));
+  }
+
+  const account = await Account.findById(id);
+  if (!account) {
+    return next(new AppError('Account not found.', 404, 'NOT_FOUND'));
+  }
+
+  // Enforce state transition rule: only frozen accounts can be unfrozen
+  if (account.status !== 'frozen') {
+    return next(
+      new AppError(
+        `Account cannot be unfrozen. Current status is '${account.status}'. Only 'frozen' accounts can be unfrozen.`,
+        409,
+        'CONFLICT'
+      )
+    );
+  }
+
+  account.status = 'active';
+  account.freezeReason = null;
+  await account.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Account has been unfrozen successfully.',
+    data: {
+      account
+    }
+  });
 });
+
+/**
+ * Backwards compatibility stubs
+ */
+const freezeAccountStub = freezeAccount;
+const unfreezeAccountStub = unfreezeAccount;
 
 module.exports = {
   createAccount,
@@ -430,6 +502,8 @@ module.exports = {
   getAccountTransactions,
   getAccountStatement,
   getStatementStub,
+  freezeAccount,
+  unfreezeAccount,
   freezeAccountStub,
   unfreezeAccountStub
 };

@@ -40,6 +40,11 @@
       "key": "beneficiaryId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "flaggedTransactionId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -1478,33 +1483,31 @@
       ]
     },
     {
-      "name": "7. Teammate Stubs (Member 3 - 501 Server Error Not Implemented)",
+      "name": "7. Sprint 3 — Flagged Transactions, Account Controls, Interest & Staff Dashboard (Modules 9–13)",
       "item": [
         {
-          "name": "[STUB - Member 3] Freeze Account (501)",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffToken}}"
+          "name": "1. GET Flagged Transactions (Module 9 - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Success is true', function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.items).to.be.an('array');",
+                  "});",
+                  "if (jsonData.data.items && jsonData.data.items.length > 0) {",
+                  "    pm.collectionVariables.set('flaggedTransactionId', jsonData.data.items[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
               }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/accounts/{{accountId}}/freeze",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "accounts",
-                "{{accountId}}",
-                "freeze"
-              ]
             }
-          }
-        },
-        {
-          "name": "[STUB - Member 3] Staff Flagged Transactions (501)",
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -1526,7 +1529,352 @@
           }
         },
         {
-          "name": "[STUB - Member 3] Staff Dashboard (501)",
+          "name": "2. GET Flagged Transactions with Pagination (Module 9 - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Pagination metadata present', function () {",
+                  "    pm.expect(jsonData.data.pagination).to.have.property('currentPage', 1);",
+                  "    pm.expect(jsonData.data.pagination).to.have.property('limit', 5);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/flagged-transactions?page=1&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "flagged-transactions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. GET Flagged Transactions Filtered by accountId (Module 9 - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Items match account filter', function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/flagged-transactions?accountId={{accountId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "flagged-transactions"
+              ],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. GET Flagged Transactions Filtered by Date Range (Module 9 - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Items array returned', function () {",
+                  "    pm.expect(jsonData.data.items).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/flagged-transactions?startDate=2026-01-01&endDate=2026-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "flagged-transactions"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. PUT Review Flagged Transaction (Module 9 - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Transaction marked reviewed', function () {",
+                  "    pm.expect(jsonData.data.transaction.reviewed).to.be.true;",
+                  "    pm.expect(jsonData.data.transaction.flagged).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remarks\": \"Reviewed and verified source of funds with customer.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/flagged-transactions/{{flaggedTransactionId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "flagged-transactions",
+                "{{flaggedTransactionId}}",
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6. PUT Freeze Account (Module 10 - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Account status is frozen', function () {",
+                  "    pm.expect(jsonData.data.account.status).to.eql('frozen');",
+                  "    pm.expect(jsonData.data.account.freezeReason).to.not.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Suspicious transaction activity under investigation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/freeze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "freeze"
+              ]
+            }
+          }
+        },
+        {
+          "name": "7. PUT Unfreeze Account (Module 10 - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Account status restored to active', function () {",
+                  "    pm.expect(jsonData.data.account.status).to.eql('active');",
+                  "    pm.expect(jsonData.data.account.freezeReason).to.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/unfreeze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "unfreeze"
+              ]
+            }
+          }
+        },
+        {
+          "name": "8. POST Run Interest Job (Module 11 - Admin Only - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Summary contains processing metrics', function () {",
+                  "    pm.expect(jsonData.data.summary).to.have.property('accountsProcessed');",
+                  "    pm.expect(jsonData.data.summary).to.have.property('accountsCredited');",
+                  "    pm.expect(jsonData.data.summary).to.have.property('totalInterestCredited');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/run-interest-job",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "run-interest-job"
+              ]
+            }
+          }
+        },
+        {
+          "name": "9. GET Staff Dashboard (Module 12 - 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Dashboard contains aggregated analytics', function () {",
+                  "    pm.expect(jsonData.data).to.have.property('pendingAccountApprovals');",
+                  "    pm.expect(jsonData.data).to.have.property('unreviewedFlaggedTransactions');",
+                  "    pm.expect(jsonData.data).to.have.property('frozenAccounts');",
+                  "    pm.expect(jsonData.data.recentTransactions).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
@@ -1543,6 +1891,133 @@
               "path": [
                 "staff",
                 "dashboard"
+              ]
+            }
+          }
+        },
+        {
+          "name": "10. Negative Test: Customer Attempt Staff-Only Endpoint (403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('ErrorCode is FORBIDDEN', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('FORBIDDEN');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "staff",
+                "dashboard"
+              ]
+            }
+          }
+        },
+        {
+          "name": "11. Negative Test: Freeze Already Frozen Account (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('ErrorCode is CONFLICT', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('CONFLICT');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Freeze second time\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/freeze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "freeze"
+              ]
+            }
+          }
+        },
+        {
+          "name": "12. Negative Test: Unfreeze Account That Is Not Frozen (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('ErrorCode is CONFLICT', function () {",
+                  "    pm.expect(jsonData.errorCode).to.eql('CONFLICT');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{staffToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{accountId}}/unfreeze",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountId}}",
+                "unfreeze"
               ]
             }
           }

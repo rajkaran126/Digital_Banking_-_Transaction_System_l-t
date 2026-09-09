@@ -12,7 +12,9 @@ A robust, enterprise-grade backend foundation for a Digital Banking Account and 
   - [Embed vs Reference Design Decisions](#embed-vs-reference-design-decisions)
 - [Project Scaffold](#project-scaffold)
 - [Module Ownership Breakdown](#module-ownership-breakdown)
-- [API Documentation (Implemented Foundation Routes)](#api-documentation-implemented-foundation-routes)
+- [API Documentation (Implemented Routes)](#api-documentation-implemented-routes)
+- [Interest Calculation Assumptions](#interest-calculation-assumptions)
+- [Role-Based Access Control (RBAC) Audit](#role-based-access-control-rbac-audit)
 - [Architectural & Coding Conventions](#architectural--coding-conventions)
 - [Setup & Installation Instructions](#setup--installation-instructions)
 - [Testing & Postman Collection](#testing--postman-collection)
@@ -203,12 +205,17 @@ project-root/
 | **Module 4** | **Beneficiary Management** (Add Beneficiary with Active Check & Ownership Check, List Beneficiaries, Delete Beneficiary) | **Foundation** | **Implemented & Tested** |
 | **Module 5** | **Fund Transfers & Transaction Processing** (`POST /api/transactions/transfer`, Ledger Records, Balance & Limit Checks) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
 | **Module 6** | **Transaction Ledger & Account Statements** (`GET /api/accounts/:id/transactions`, `GET /api/accounts/:id/statement`) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
-| **Module 7** | **Staff Flagged Transactions & Analytics Dashboard** (`GET /api/staff/flagged-transactions`, `GET /api/staff/dashboard`) | **Member 3** | **Stubbed (`501 Not Implemented`)** |
-| **Module 8** | **Minimum Balance & Limits Enforcement** (Integrated inside transfer engine and account balance validation) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
+| **Module 7** | **Minimum Balance & Transfer Limits Enforcement** (Integrated inside transfer engine balance validation) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
+| **Module 8** | **Suspicious Transfer Threshold Detection** (Automatic `flagged: true` tagging for transfers exceeding $10,000 threshold) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
+| **Module 9** | **Suspicious Transaction Review & Listing** (`GET /api/staff/flagged-transactions`, `PUT /api/staff/flagged-transactions/:id/review`) | **Member 3 (Sprint 3)** | **Implemented & Tested** |
+| **Module 10** | **Account Freeze & Unfreeze Controls** (`PUT /api/accounts/:id/freeze`, `PUT /api/accounts/:id/unfreeze`, Status Guarding) | **Member 3 (Sprint 3)** | **Implemented & Tested** |
+| **Module 11** | **Automated Interest Calculation Service & Manual Endpoint** (`calculateInterestForSavingsAccounts()`, `POST /api/staff/run-interest-job`) | **Member 3 (Sprint 3)** | **Implemented & Tested** |
+| **Module 12** | **Staff Executive Analytics Dashboard** (`GET /api/staff/dashboard` with high-performance MongoDB `$facet` aggregation) | **Member 3 (Sprint 3)** | **Implemented & Tested** |
+| **Module 13** | **Final Architectural RBAC & Codebase Ownership Audit** (Full route security verification and team gap analysis in `NOTES.md`) | **Member 3 (Sprint 3)** | **Implemented & Tested** |
 
 ---
 
-## API Documentation (Implemented Foundation & Sprint 2 Routes)
+## API Documentation (Implemented Routes)
 
 ### 1. Authentication & Onboarding
 | Method | Endpoint | Access | Request Body | Status Codes | Description |
@@ -237,7 +244,7 @@ project-root/
 | `GET` | `/api/beneficiaries` | Authenticated | Query: `?accountId=` | `200`, `401`, `403` | Lists beneficiaries for customer's accounts or all beneficiaries for staff. |
 | `DELETE` | `/api/beneficiaries/:id` | Owner / Staff / Admin | None | `200`, `401`, `403`, `404` | Removes a beneficiary after checking parent account ownership. |
 
-### 5. Staff Operations
+### 5. Staff Review Queue
 | Method | Endpoint | Access | Request Body | Status Codes | Description |
 |---|---|---|---|---|---|
 | `GET` | `/api/staff/pending-accounts` | Staff / Admin | Query: `?page=1&limit=10` | `200`, `401`, `403` | Lists all pending account applications awaiting review. |
@@ -248,6 +255,96 @@ project-root/
 | `POST` | `/api/transactions/transfer` | Customer (Owner) | `{ fromAccountId, toAccountNumber, amount, description? }` | `200`, `400`, `401`, `403`, `404`, `409` | Executes atomic fund transfer via Mongoose session transaction (`session.withTransaction`). Enforces account ownership, active status on both ends, sufficient balance, minimum balance requirement (Module 8), and daily transfer limit. Flags transactions exceeding \$10,000 threshold for compliance (Module 9). Atomically records matching debit and credit ledger documents. |
 | `GET` | `/api/accounts/:id/transactions` | Owner / Staff / Admin | Query: `?page=1&limit=10` | `200`, `401`, `403`, `404` | Retrieves paginated transactions for the specified account in reverse chronological order (newest first). Strictly ownership-guarded for customers. |
 | `GET` | `/api/accounts/:id/statement` | Owner / Staff / Admin | Query: `?from=YYYY-MM-DD&to=YYYY-MM-DD` | `200`, `400`, `401`, `403`, `404` | Generates official account statement for the given ISO date range. Returns transaction stream, computed `openingBalance`, `closingBalance`, `totalDebits`, `totalCredits`, and `netChange`. Returns empty array if no transactions in range. |
+
+### 7. Account Freeze & Unfreeze Controls (Module 10 - Sprint 3)
+| Method | Endpoint | Access | Request Body | Status Codes | Description |
+|---|---|---|---|---|---|
+| `PUT` | `/api/accounts/:id/freeze` | Staff / Admin | `{ reason? }` | `200`, `400`, `401`, `403`, `404`, `409` | Freezes an active account (`status: "active"` $\to$ `"frozen"`). Sets `freezeReason`. Returns **409 Conflict** if account is not currently active. Frozen accounts cannot transfer or receive interest. |
+| `PUT` | `/api/accounts/:id/unfreeze` | Staff / Admin | None | `200`, `401`, `403`, `404`, `409` | Unfreezes a frozen account (`status: "frozen"` $\to$ `"active"`). Clears `freezeReason`. Returns **409 Conflict** if account is not currently frozen. |
+
+### 8. Suspicious Transaction Compliance Review (Module 9 - Sprint 3)
+| Method | Endpoint | Access | Request Body | Status Codes | Description |
+|---|---|---|---|---|---|
+| `GET` | `/api/staff/flagged-transactions` | Staff / Admin | Query: `?page=1&limit=10&accountId=&startDate=&endDate=` | `200`, `400`, `401`, `403` | Lists all flagged suspicious transactions (`flagged: true`) paginated in reverse chronological order. Supports filtering by `accountId` and ISO date range (`startDate`, `endDate`). |
+| `PUT` | `/api/staff/flagged-transactions/:id/review` | Staff / Admin | `{ remarks }` | `200`, `400`, `401`, `403`, `404`, `409` | Reviews a flagged suspicious transaction. Sets `reviewed = true`, `reviewedBy = req.user._id`, and `reviewNote = remarks`. Preserves original flag. Returns **409 Conflict** if transaction is not flagged. |
+
+### 9. Automated Interest Calculation & Batch Operations (Module 11 - Sprint 3)
+| Method | Endpoint | Access | Request Body | Status Codes | Description |
+|---|---|---|---|---|---|
+| `POST` | `/api/staff/run-interest-job` | Admin strictly | None | `200`, `401`, `403` | Manually triggers the interest calculation service `calculateInterestForSavingsAccounts()`. Credits daily simple interest to all eligible active savings accounts using atomic session transactions and inserts corresponding credit ledger entries. |
+
+### 10. Staff Executive Analytics Dashboard (Module 12 - Sprint 3)
+| Method | Endpoint | Access | Request Body | Status Codes | Description |
+|---|---|---|---|---|---|
+| `GET` | `/api/staff/dashboard` | Staff / Admin | None | `200`, `401`, `403` | Aggregates system metrics in a single database round trip using MongoDB `$facet`: returns `pendingAccountApprovals`, `unreviewedFlaggedTransactions`, `frozenAccounts`, and 10 most recent transactions system-wide. |
+
+---
+
+## Interest Calculation Assumptions
+
+The interest engine implemented in [`services/interest.service.js`](file:///c:/Users/Krupa/Digital_Banking_-_Transaction_System_l-t/Digital_Banking_-_Transaction_System_l-t/services/interest.service.js) operates under the following banking standards and mathematical assumptions:
+
+1. **Configurable Annual Interest Rate**:
+   - Configured via environment variable `ANNUAL_INTEREST_RATE` (e.g. `0.04` representing 4.0% per annum).
+   - Defaults to **4.0%** (`0.04`) if the environment variable is not defined or is non-numeric. Can be overridden per programmatic invocation.
+2. **Simple-Interest Daily Accrual Formula**:
+   $$\text{Daily Interest} = \frac{\text{Account Balance} \times \text{Annual Interest Rate}}{365}$$
+3. **Day-Count Convention**:
+   - Uses an exact **365-day denominator** convention for standard retail savings accounts.
+4. **Eligibility Criteria**:
+   - **Type Requirement**: Only accounts with `type === 'savings'` receive interest. Current/checking accounts (`type === 'current'`) are excluded.
+   - **Status Requirement**: Only accounts with `status === 'active'` receive interest.
+   - **No Interest for Frozen Accounts**: Accounts with `status === 'frozen'` are strictly excluded from interest calculation and balance accrual.
+   - **Pending / Closed / Rejected Accounts**: All non-active accounts are excluded.
+5. **Ledger Recording & Atomicity**:
+   - Each interest credit generates an immutable `Transaction` document:
+     - `accountId`: Account ObjectId
+     - `type`: `'credit'`
+     - `amount`: Calculated interest amount (rounded to 2 decimal places)
+     - `balanceAfter`: Mutated account balance
+     - `relatedAccount`: `null`
+     - `description`: `'Daily interest credit'`
+     - `flagged`: `false`
+   - Atomicity between account balance increment and ledger document creation is guaranteed using Mongoose client sessions (`session.withTransaction`) with a fallback for standalone non-replica MongoDB instances.
+6. **Zero-Interest Suppression**:
+   - Accounts with zero balance or calculated interest yielding less than 1 cent ($< 0.01$) are bypassed without balance modification and without writing zero-value ledger entries.
+7. **Execution & Scheduling**:
+   - As per `package.json`, third-party schedulers such as `node-cron` are not bundled to prevent unnecessary dependency overhead. Scheduled cron execution is optional and can be scheduled externally via OS cron or cloud scheduler targeting `POST /api/staff/run-interest-job`.
+   - The manual endpoint `POST /api/staff/run-interest-job` is fully operational and restricted exclusively to the `admin` role.
+
+---
+
+## Role-Based Access Control (RBAC) Audit
+
+A thorough audit of every endpoint across the application was conducted to ensure strict defense-in-depth access controls:
+
+| Route | Required Role(s) | Ownership Checked | Notes & Verification Reference |
+|---|---|---|---|
+| `POST /api/auth/register` | Public (Unauthenticated) | N/A | Open onboarding; defaults `kycStatus: "pending"` |
+| `POST /api/auth/login` | Public (Unauthenticated) | N/A | Authenticates credentials; returns signed JWT |
+| `GET /api/users/me` | `customer`, `staff`, `admin` | Yes | Scoped strictly to `req.user._id` |
+| `PUT /api/users/me` | `customer`, `staff`, `admin` | Yes | Scoped strictly to `req.user._id`; locked once KYC approved |
+| `POST /api/accounts` | `customer`, `staff`, `admin` | Yes | Account created with `userId: req.user._id` |
+| `GET /api/accounts` | `customer`, `staff`, `admin` | Yes | Customers restricted to own accounts; staff/admin view all paginated |
+| `GET /api/accounts/:id` | Owner `customer`, `staff`, `admin` | Yes | Controller returns 403 Forbidden if customer does not own account |
+| `PUT /api/accounts/:id/approve` | `staff`, `admin` | N/A | Administrative workflow; enforces transition from `pending` only |
+| `GET /api/accounts/:id/transactions` | Owner `customer`, `staff`, `admin` | Yes | Controller returns 403 Forbidden if customer does not own account |
+| `GET /api/accounts/:id/statement` | Owner `customer`, `staff`, `admin` | Yes | Controller returns 403 Forbidden if customer does not own account |
+| `PUT /api/accounts/:id/freeze` | `staff`, `admin` | N/A | Compliance workflow; transitions `active` $\to$ `frozen` only |
+| `PUT /api/accounts/:id/unfreeze` | `staff`, `admin` | N/A | Compliance workflow; transitions `frozen` $\to$ `active` only |
+| `POST /api/beneficiaries` | `customer` (Owner) | Yes | Controller verifies customer owns the source account |
+| `GET /api/beneficiaries` | `customer`, `staff`, `admin` | Yes | Customers only receive beneficiaries linked to their owned accounts |
+| `DELETE /api/beneficiaries/:id` | Owner `customer`, `staff`, `admin` | Yes | Controller verifies customer owns the parent account |
+| `POST /api/transactions/transfer` | `customer` (Owner) | Yes | Controller verifies caller owns source account; enforces active status on both ends |
+| `GET /api/staff/pending-accounts` | `staff`, `admin` | N/A | Staff review queue for pending applications |
+| `GET /api/staff/flagged-transactions` | `staff`, `admin` | N/A | Compliance review queue for suspicious transactions |
+| `PUT /api/staff/flagged-transactions/:id/review` | `staff`, `admin` | N/A | Review action; marks `reviewed: true` and logs `reviewedBy` |
+| `POST /api/staff/run-interest-job` | `admin` strictly | N/A | Executive batch endpoint; returns 403 for staff and customers |
+| `GET /api/staff/dashboard` | `staff`, `admin` | N/A | System-wide statistics and metrics overview |
+
+*For detailed code-level audit commentary on teammate modules and legacy test stubs, refer to [`NOTES.md`](file:///c:/Users/Krupa/Digital_Banking_-_Transaction_System_l-t/Digital_Banking_-_Transaction_System_l-t/NOTES.md).*
+
+---
 
 ---
 
@@ -410,7 +507,16 @@ Import `P10_Digital_Banking.postman_collection.json` into Postman.
   - `GET /api/accounts/:id/statement` invalid date range ($from > to$) $\to$ 400 Validation Error
   - `GET /api/accounts/:id/statement` empty range $\to$ 200 OK with empty array
   - Immutability check: `PUT`/`DELETE /api/transactions/:id` $\to$ 404 Not Found
-- [x] **Remaining Teammate Stubs (501 `SERVER_ERROR`):**
-  - `PUT /api/accounts/:id/freeze`
-  - `GET /api/staff/flagged-transactions`
-  - `GET /api/staff/dashboard`
+- [x] **Sprint 3 Account Controls, Flagged Review, Interest Engine & Dashboard:**
+  - `GET /api/staff/flagged-transactions` $\to$ 200 OK (paginated, reverse-chronological, filterable by accountId & date range)
+  - `PUT /api/staff/flagged-transactions/:id/review` $\to$ 200 OK (marks `reviewed: true`, logs `reviewedBy` staff ID, preserves `flagged: true`)
+  - `PUT /api/staff/flagged-transactions/:id/review` on unflagged transaction $\to$ 409 Conflict
+  - `PUT /api/accounts/:id/freeze` $\to$ 200 OK (`active` $\to$ `frozen`, logs `freezeReason`)
+  - `PUT /api/accounts/:id/freeze` on non-active account $\to$ 409 Conflict
+  - `PUT /api/accounts/:id/unfreeze` $\to$ 200 OK (`frozen` $\to$ `active`, clears `freezeReason`)
+  - `PUT /api/accounts/:id/unfreeze` on non-frozen account $\to$ 409 Conflict
+  - Fund transfers rejected from/to frozen accounts $\to$ 409 Conflict with `CONFLICT`
+  - `POST /api/staff/run-interest-job` $\to$ 200 OK (restricted to admin; simple interest credited to active savings accounts, zero interest and frozen accounts skipped, atomic ledger credit recorded)
+  - `POST /api/staff/run-interest-job` customer/staff attempt $\to$ 403 Forbidden
+  - `GET /api/staff/dashboard` $\to$ 200 OK (aggregated metrics via MongoDB `$facet`: pending accounts, unreviewed flagged, frozen accounts, 10 recent transactions)
+  - `GET /api/staff/dashboard` customer attempt $\to$ 403 Forbidden

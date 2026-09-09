@@ -42,6 +42,21 @@ const transactionSchema = new mongoose.Schema(
       default: false,
       index: true
     },
+    reviewed: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    reviewNote: {
+      type: String,
+      trim: true,
+      default: null
+    },
     createdAt: {
       type: Date,
       default: Date.now,

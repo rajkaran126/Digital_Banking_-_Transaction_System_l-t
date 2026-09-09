@@ -37,6 +37,11 @@ const accountSchema = new mongoose.Schema(
       default: 'pending',
       index: true
     },
+    freezeReason: {
+      type: String,
+      trim: true,
+      default: null
+    },
     dailyTransferLimit: {
       type: Number,
       default: 50000,

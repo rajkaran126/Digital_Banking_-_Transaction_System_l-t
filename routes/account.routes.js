@@ -30,10 +30,18 @@ router.get('/:id/transactions', accountController.getAccountTransactions);
 router.get('/:id/statement', accountController.getAccountStatement);
 
 // ==========================================
-// STUBS FOR TEAMMATES (MEMBER 3)
+// SPRINT 3 - ACCOUNT FREEZE & UNFREEZE (MODULE 10)
 // ==========================================
-// [STUB - Member 3: Account Controls]
-router.put('/:id/freeze', restrictTo('staff', 'admin'), accountController.freezeAccountStub);
-router.put('/:id/unfreeze', restrictTo('staff', 'admin'), accountController.unfreezeAccountStub);
+router.put(
+  '/:id/freeze',
+  restrictTo('staff', 'admin'),
+  validate(schemas.freezeAccount),
+  accountController.freezeAccount
+);
+router.put(
+  '/:id/unfreeze',
+  restrictTo('staff', 'admin'),
+  accountController.unfreezeAccount
+);
 
 module.exports = router;

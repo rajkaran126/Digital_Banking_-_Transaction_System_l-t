@@ -110,6 +110,18 @@ const schemas = {
       'any.required': 'nickname is required',
       'string.max': 'nickname cannot exceed 50 characters'
     })
+  }),
+
+  // Sprint 3 Schemas
+  reviewTransaction: Joi.object({
+    remarks: Joi.string().trim().max(500).required().messages({
+      'string.empty': 'Remarks cannot be empty',
+      'any.required': 'Remarks are required for reviewing a transaction'
+    })
+  }),
+
+  freezeAccount: Joi.object({
+    reason: Joi.string().trim().max(250).allow('', null).default('Suspicious transaction activity')
   })
 };
 

@@ -25,7 +25,7 @@ const protect = catchAsync(async (req, res, next) => {
 
   let decoded;
   try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
+    decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_jwt_key_p10_digital_banking_2026');
   } catch (err) {
     return next(
       new AppError('Invalid or expired authentication token. Please log in again.', 401, 'UNAUTHORIZED')
