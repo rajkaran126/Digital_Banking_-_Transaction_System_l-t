@@ -326,33 +326,34 @@ const runTests = async () => {
       .set('Authorization', `Bearer ${customerToken}`);
     assert(delBenRes.status === 200, 'DELETE /api/beneficiaries/:id -> 200 OK', delBenRes.status);
 
-    // [TEST GROUP 5: TEAMMATE STUBS (501 NOT IMPLEMENTED)]
-    console.log('\n[TEST GROUP 5: TEAMMATE STUBS (501 SERVER_ERROR)]');
-    const transferStub = await request(app)
+    // [TEST GROUP 5: SPRINT 2 & 3 ENDPOINTS INTEGRATION SMOKE TESTS]
+    console.log('\n[TEST GROUP 5: SPRINT 2 & 3 ENDPOINTS INTEGRATION SMOKE TESTS]');
+    const transferRes = await request(app)
       .post('/api/transactions/transfer')
       .set('Authorization', `Bearer ${customerToken}`)
       .send({});
-    assert(transferStub.status === 501, 'POST /api/transactions/transfer (stub) -> 501 Not Implemented', transferStub.status);
+    assert(transferRes.status === 400, 'POST /api/transactions/transfer validation check -> 400 Bad Request', transferRes.status);
 
-    const statementStub = await request(app)
+    const statementRes = await request(app)
       .get(`/api/accounts/${customerAccountId}/statement`)
       .set('Authorization', `Bearer ${customerToken}`);
-    assert(statementStub.status === 501, 'GET /api/accounts/:id/statement (stub) -> 501 Not Implemented', statementStub.status);
+    assert(statementRes.status === 400, 'GET /api/accounts/:id/statement validation check -> 400 Bad Request', statementRes.status);
 
-    const freezeStub = await request(app)
+    const freezeRes = await request(app)
       .put(`/api/accounts/${customerAccountId}/freeze`)
-      .set('Authorization', `Bearer ${staffToken}`);
-    assert(freezeStub.status === 501, 'PUT /api/accounts/:id/freeze (stub) -> 501 Not Implemented', freezeStub.status);
+      .set('Authorization', `Bearer ${staffToken}`)
+      .send({ reason: 'Audit hold' });
+    assert(freezeRes.status === 200, 'PUT /api/accounts/:id/freeze (staff) -> 200 OK', freezeRes.status);
 
-    const flaggedStub = await request(app)
+    const flaggedRes = await request(app)
       .get('/api/staff/flagged-transactions')
       .set('Authorization', `Bearer ${staffToken}`);
-    assert(flaggedStub.status === 501, 'GET /api/staff/flagged-transactions (stub) -> 501 Not Implemented', flaggedStub.status);
+    assert(flaggedRes.status === 200, 'GET /api/staff/flagged-transactions (staff) -> 200 OK', flaggedRes.status);
 
-    const dashboardStub = await request(app)
+    const dashboardRes = await request(app)
       .get('/api/staff/dashboard')
       .set('Authorization', `Bearer ${staffToken}`);
-    assert(dashboardStub.status === 501, 'GET /api/staff/dashboard (stub) -> 501 Not Implemented', dashboardStub.status);
+    assert(dashboardRes.status === 200, 'GET /api/staff/dashboard (staff) -> 200 OK', dashboardRes.status);
 
     console.log('\n=============================================');
     console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);

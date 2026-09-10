@@ -206,7 +206,7 @@ project-root/
 | **Module 5** | **Fund Transfers & Transaction Processing** (`POST /api/transactions/transfer`, Ledger Records, Balance & Limit Checks) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
 | **Module 6** | **Transaction Ledger & Account Statements** (`GET /api/accounts/:id/transactions`, `GET /api/accounts/:id/statement`) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
 | **Module 7** | **Minimum Balance & Transfer Limits Enforcement** (Integrated inside transfer engine balance validation) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
-| **Module 8** | **Suspicious Transfer Threshold Detection** (Automatic `flagged: true` tagging for transfers exceeding $10,000 threshold) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
+| **Module 8** | **Suspicious Transfer Threshold Detection** (Automatic `flagged: true` tagging for transfers exceeding ₹10,000 threshold) | **Member 2 (Sprint 2)** | **Implemented & Tested** |
 | **Module 9** | **Suspicious Transaction Review & Listing** (`GET /api/staff/flagged-transactions`, `PUT /api/staff/flagged-transactions/:id/review`) | **Member 3 (Sprint 3)** | **Implemented & Tested** |
 | **Module 10** | **Account Freeze & Unfreeze Controls** (`PUT /api/accounts/:id/freeze`, `PUT /api/accounts/:id/unfreeze`, Status Guarding) | **Member 3 (Sprint 3)** | **Implemented & Tested** |
 | **Module 11** | **Automated Interest Calculation Service & Manual Endpoint** (`calculateInterestForSavingsAccounts()`, `POST /api/staff/run-interest-job`) | **Member 3 (Sprint 3)** | **Implemented & Tested** |
@@ -252,7 +252,7 @@ project-root/
 ### 6. Fund Transfers, Ledger & Account Statements (Sprint 2)
 | Method | Endpoint | Access | Request Body | Status Codes | Description |
 |---|---|---|---|---|---|
-| `POST` | `/api/transactions/transfer` | Customer (Owner) | `{ fromAccountId, toAccountNumber, amount, description? }` | `200`, `400`, `401`, `403`, `404`, `409` | Executes atomic fund transfer via Mongoose session transaction (`session.withTransaction`). Enforces account ownership, active status on both ends, sufficient balance, minimum balance requirement (Module 8), and daily transfer limit. Flags transactions exceeding \$10,000 threshold for compliance (Module 9). Atomically records matching debit and credit ledger documents. |
+| `POST` | `/api/transactions/transfer` | Customer (Owner) | `{ fromAccountId, toAccountNumber, amount, description? }` | `200`, `400`, `401`, `403`, `404`, `409` | Executes atomic fund transfer via Mongoose session transaction (`session.withTransaction`). Enforces account ownership, active status on both ends, sufficient balance, minimum balance requirement (Module 8), and daily transfer limit. Flags transactions exceeding ₹10,000 threshold for compliance (Module 9). Atomically records matching debit and credit ledger documents. |
 | `GET` | `/api/accounts/:id/transactions` | Owner / Staff / Admin | Query: `?page=1&limit=10` | `200`, `401`, `403`, `404` | Retrieves paginated transactions for the specified account in reverse chronological order (newest first). Strictly ownership-guarded for customers. |
 | `GET` | `/api/accounts/:id/statement` | Owner / Staff / Admin | Query: `?from=YYYY-MM-DD&to=YYYY-MM-DD` | `200`, `400`, `401`, `403`, `404` | Generates official account statement for the given ISO date range. Returns transaction stream, computed `openingBalance`, `closingBalance`, `totalDebits`, `totalCredits`, and `netChange`. Returns empty array if no transactions in range. |
 
@@ -438,15 +438,20 @@ npm run seed
    - Email: `staff@bank.com`
    - Password: `Staff@123`
    - Role: `staff`
-3. **Customer 1 (KYC Approved)**:
-   - Email: `john.doe@example.com`
+3. **Customer 1 (Aarav Mehta - KYC Approved)**:
+   - Email: `aarav.mehta@example.com`
    - Password: `Customer@123`
-   - Active Savings Account: `1098765432` (Balance: $25,000)
-   - Pending Current Account: `2098765432` (Balance: $10,000)
-4. **Customer 2 (KYC Pending)**:
-   - Email: `alice.smith@example.com`
+   - Active Savings Account: `1098765432` (Balance: ₹25,450)
+   - Active Current Account: `2044881122` (Balance: ₹85,200)
+   - Pending Current Account: `2098765432` (Balance: ₹12,800)
+4. **Customer 2 (Priya Sharma - KYC Approved)**:
+   - Email: `priya.sharma@example.com`
    - Password: `Customer@123`
-   - Active Savings Account: `1012345678` (Balance: $15,000)
+   - Active Savings Account: `1012345678` (Balance: ₹18,200)
+5. **Customer 3 (Ananya Iyer - KYC Pending)**:
+   - Email: `ananya.iyer@example.com`
+   - Password: `Customer@123`
+   - Pending Current Account: `2033445566` (Balance: ₹9,500)
 
 ### 4. Start Development Server
 ```bash

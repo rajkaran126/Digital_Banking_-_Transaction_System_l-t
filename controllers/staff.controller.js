@@ -6,6 +6,8 @@ const catchAsync = require('../utils/catchAsync');
 const { getPagination, formatPaginatedResponse } = require('../utils/pagination');
 const { calculateInterestForSavingsAccounts } = require('../services/interest.service');
 
+const User = require('../models/User');
+
 /**
  * @desc    Get all pending account applications awaiting review
  * @route   GET /api/staff/pending-accounts
@@ -31,6 +33,70 @@ const getPendingAccounts = catchAsync(async (req, res, next) => {
     success: true,
     message: 'Pending account applications retrieved successfully.',
     data: responseData
+  });
+});
+
+/**
+ * @desc    Get all customers with pending KYC verification (Module 1)
+ * @route   GET /api/staff/pending-kyc
+ * @access  Private (Staff / Admin only)
+ */
+const getPendingKYC = catchAsync(async (req, res, next) => {
+  const { page, limit, skip } = getPagination(req.query);
+  const filter = { role: 'customer', kycStatus: 'pending' };
+
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .select('name email role kycStatus phone address idDocumentType idDocumentNumber createdAt')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    User.countDocuments(filter)
+  ]);
+
+  const responseData = formatPaginatedResponse(users, total, page, limit);
+
+  res.status(200).json({
+    success: true,
+    message: 'Pending customer KYC applications retrieved successfully.',
+    data: responseData
+  });
+});
+
+/**
+ * @desc    Staff review and approve/reject customer KYC (Module 1)
+ * @route   PUT /api/staff/users/:id/kyc
+ * @access  Private (Staff / Admin only)
+ */
+const reviewKYC = catchAsync(async (req, res, next) => {
+  const { decision, remarks } = req.body;
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return next(new AppError('Customer not found.', 404, 'NOT_FOUND'));
+  }
+
+  const normalized = (decision || '').toLowerCase();
+  if (normalized !== 'approved' && normalized !== 'rejected') {
+    return next(
+      new AppError("Decision must be either 'approved' or 'rejected'.", 400, 'VALIDATION_ERROR')
+    );
+  }
+
+  user.kycStatus = normalized;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: `Customer KYC has been ${normalized}.`,
+    data: {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        kycStatus: user.kycStatus
+      }
+    }
   });
 });
 
@@ -240,6 +306,8 @@ const getStaffDashboardStub = getStaffDashboard;
 
 module.exports = {
   getPendingAccounts,
+  getPendingKYC,
+  reviewKYC,
   getFlaggedTransactions,
   reviewFlaggedTransaction,
   runInterestJob,

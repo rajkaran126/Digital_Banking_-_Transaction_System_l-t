@@ -11,6 +11,10 @@ router.use(restrictTo('staff', 'admin'));
 // Foundation: Pending account review queue
 router.get('/pending-accounts', staffController.getPendingAccounts);
 
+// Module 1: Customer KYC review queue & approval
+router.get('/pending-kyc', staffController.getPendingKYC);
+router.put('/users/:id/kyc', staffController.reviewKYC);
+
 // ==========================================
 // SPRINT 3 - MODULE 9: FLAGGED TRANSACTIONS
 // ==========================================

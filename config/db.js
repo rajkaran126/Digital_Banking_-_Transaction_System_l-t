@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
 
 const connectDB = async () => {
   try {
@@ -11,19 +13,29 @@ const connectDB = async () => {
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
-      console.log('Local MongoDB not running. Initializing In-Memory MongoDB Server for development...');
+      console.log('Local MongoDB service not running. Initializing Persistent In-Memory MongoDB Server...');
       try {
         const { MongoMemoryServer } = require('mongodb-memory-server');
-        const mongod = await MongoMemoryServer.create();
+        const dbPath = path.join(__dirname, '../.mongo-data');
+        if (!fs.existsSync(dbPath)) {
+          fs.mkdirSync(dbPath, { recursive: true });
+        }
+
+        const mongod = await MongoMemoryServer.create({
+          instance: {
+            dbPath,
+            storageEngine: 'wiredTiger'
+          }
+        });
         const uri = mongod.getUri();
         await mongoose.connect(uri);
-        console.log(`In-Memory MongoDB Connected at ${uri}`);
+        console.log(`Persistent MongoDB Connected at ${uri} (dbPath: ${dbPath})`);
         
-        // Auto-seed initial demo dataset
+        // Auto-seed initial demo dataset ONLY if database is empty
         const seedData = require('../seed');
-        await seedData(false);
+        await seedData(false, true);
       } catch (memErr) {
-        console.error(`In-Memory Database Error: ${memErr.message}`);
+        console.error(`Database Error: ${memErr.message}`);
         process.exit(1);
       }
     } else {

@@ -6,11 +6,19 @@ const Beneficiary = require('./models/Beneficiary');
 const Transaction = require('./models/Transaction');
 const Approval = require('./models/Approval');
 
-const seedData = async (autoDisconnect = true) => {
+const seedData = async (autoDisconnect = true, onlyIfEmpty = false) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(process.env.MONGODB_URI);
       console.log('Connected to MongoDB for seeding...');
+    }
+
+    if (onlyIfEmpty) {
+      const existingUserCount = await User.countDocuments();
+      if (existingUserCount > 0) {
+        console.log(`Persistent database already initialized (${existingUserCount} users present). Preserving existing data.`);
+        return;
+      }
     }
 
     // Clear existing data in development
@@ -278,15 +286,15 @@ const seedData = async (autoDisconnect = true) => {
     console.log('Demo Credentials:');
     console.log('---------------------------------------------');
     console.log('1. Customer: aarav.mehta@example.com    / Customer@123 (Aarav Mehta - KYC Approved)');
-    console.log('   - Active Savings:  1098765432 ($25,450)');
-    console.log('   - Active Current:  2044881122 ($85,200)');
-    console.log('   - Pending Current: 2098765432 ($12,800)');
+    console.log('   - Active Savings:  1098765432 (₹25,450)');
+    console.log('   - Active Current:  2044881122 (₹85,200)');
+    console.log('   - Pending Current: 2098765432 (₹12,800)');
     console.log('2. Customer: priya.sharma@example.com   / Customer@123 (Priya Sharma - KYC Approved)');
-    console.log('   - Active Savings:  1012345678 ($18,200)');
+    console.log('   - Active Savings:  1012345678 (₹18,200)');
     console.log('3. Customer: rohan.verma@example.com    / Customer@123 (Rohan Verma - KYC Approved)');
-    console.log('   - Active Savings:  1077665544 ($42,100)');
+    console.log('   - Active Savings:  1077665544 (₹42,100)');
     console.log('4. Customer: ananya.iyer@example.com    / Customer@123 (Ananya Iyer - KYC Pending)');
-    console.log('   - Pending Current: 2033445566 ($9,500)');
+    console.log('   - Pending Current: 2033445566 (₹9,500)');
     console.log('5. Staff:    staff@bank.com             / Staff@123 (Pooja Deshmukh)');
     console.log('6. Staff:    vikram.malhotra@bank.com   / Staff@123 (Vikram Malhotra)');
     console.log('7. Admin:    admin@bank.com             / Admin@123 (Rajesh Sharma)');
