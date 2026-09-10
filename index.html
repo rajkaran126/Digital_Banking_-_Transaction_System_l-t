@@ -103,7 +103,52 @@
         .badge-active { background-color: #dcfce7; color: var(--success); }
         .badge-pending { background-color: #fef3c7; color: var(--warning); }
         .badge-rejected { background-color: #fee2e2; color: var(--danger); }
+        .badge-frozen { background-color: #e0f2fe; color: #0284c7; }
+        .badge-flagged { background-color: #fee2e2; color: #b91c1c; font-weight: 700; }
+        .badge-credit { background-color: #dcfce7; color: #15803d; }
+        .badge-debit { background-color: #fee2e2; color: #b91c1c; }
         .badge-role { background-color: #e0e7ff; color: #4338ca; }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .notice-box {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #1e3a8a;
+            margin-bottom: 18px;
+        }
 
         /* Container */
         .container {
@@ -451,9 +496,9 @@
                 </div>
             </div>
 
-            <!-- TAB 2: ACCOUNTS -->
+            <!-- TAB 2: ACCOUNTS & CONTROLS -->
             <div class="tab-panel" id="accountsTab">
-                <div class="card">
+                <div class="card" id="applyAccountCard">
                     <div class="card-header">
                         <div class="card-title">Apply for a New Account</div>
                     </div>
@@ -477,7 +522,7 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">Registered Accounts</div>
+                        <div class="card-title" id="accountsTitle">Registered Accounts</div>
                         <button class="btn btn-outline" onclick="fetchAccounts()">Refresh Accounts</button>
                     </div>
                     <table class="data-table">
@@ -486,52 +531,198 @@
                                 <th>Account Number</th>
                                 <th>Type</th>
                                 <th>Balance (₹)</th>
-                                <th>Daily Transfer Limit (₹)</th>
+                                <th>Limit (₹)</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="accountsTableBody">
-                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No accounts found.</td></tr>
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No accounts found.</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- TAB 3: BENEFICIARIES -->
+            <!-- TAB 3: FUND TRANSFERS -->
+            <div class="tab-panel" id="transfersTab">
+                <div class="notice-box">
+                    <strong>Fund Transfer Engine:</strong> Real-time domestic funds transfer with atomic two-phase commit ledger updates. Transactions exceeding <strong>₹10,000</strong> are automatically flagged for staff AML compliance review.
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Initiate Fund Transfer</div>
+                    </div>
+                    <form onsubmit="handleTransfer(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>From Source Account</label>
+                                <select id="transferSourceAcc" required onchange="updateTransferSourceBalance()">
+                                    <option value="">Select your active account...</option>
+                                </select>
+                                <small id="transferSourceBalanceText" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; display: block;"></small>
+                            </div>
+                            <div class="form-group">
+                                <label>Target Account Number</label>
+                                <input type="text" id="transferTargetAccNum" placeholder="10-digit account number (e.g. 1012345678)" required>
+                                <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; display: block;">
+                                    Whitelisted Payee: <select id="transferBeneficiarySelect" onchange="fillTargetFromBeneficiary(this.value)" style="padding: 2px 6px; font-size: 0.75rem; display: inline-block; width: auto;"><option value="">-- Choose saved payee --</option></select>
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <label>Amount (₹)</label>
+                                <input type="number" id="transferAmount" placeholder="e.g. 5000" min="1" step="any" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Payment Description / Reference</label>
+                                <input type="text" id="transferDesc" placeholder="e.g. Rent, Groceries, Invoice #102" maxlength="200">
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <button type="submit" class="btn" id="btnSubmitTransfer">Execute Transfer</button>
+                        </div>
+                    </form>
+                    <div id="transferResultNotice" style="margin-top: 16px; display: none;"></div>
+                </div>
+
+                <!-- Recent Ledger Entries for Transfer Tab -->
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <div class="card-title">Recent Transactions for Source Account</div>
+                        <button class="btn btn-outline" onclick="refreshTransferTransactions()">Refresh Activity</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Amount (₹)</th>
+                                <th>Resulting Balance (₹)</th>
+                                <th>AML Flag</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transferRecentTxBody">
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Select an account to view recent transactions.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 4: STATEMENTS & LEDGER -->
+            <div class="tab-panel" id="statementTab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Generate Account Statement</div>
+                    </div>
+                    <form onsubmit="handleGenerateStatement(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Select Account</label>
+                                <select id="statementAccSelect" required>
+                                    <option value="">Select account...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>From Date</label>
+                                <input type="date" id="statementFromDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>To Date</label>
+                                <input type="date" id="statementToDate" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Generate Statement</button>
+                    </form>
+                </div>
+
+                <!-- Statement KPI Summary Section -->
+                <div id="statementSummarySection" style="display: none; margin-top: 24px;">
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Opening Balance</span>
+                            <span class="stat-val" id="statOpening">₹0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Total Credits (+)</span>
+                            <span class="stat-val" id="statCredits" style="color: var(--success);">₹0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Total Debits (-)</span>
+                            <span class="stat-val" id="statDebits" style="color: var(--danger);">₹0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Net Flow</span>
+                            <span class="stat-val" id="statNet">₹0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Closing Balance</span>
+                            <span class="stat-val" id="statClosing">₹0</span>
+                        </div>
+                    </div>
+
+                    <!-- Statement Ledger Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title" id="statementTableTitle">Itemized Statement Ledger</div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Reference / Tx ID</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th>Amount (₹)</th>
+                                    <th>Balance After (₹)</th>
+                                    <th>AML Compliance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statementTableBody">
+                                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No statement generated yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: BENEFICIARIES -->
             <div class="tab-panel" id="beneficiariesTab">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">Add Beneficiary</div>
+                        <div class="card-title">Add & Whitelist Beneficiary</div>
                     </div>
                     <form onsubmit="handleAddBeneficiary(event)">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Source Account ID</label>
-                                <input type="text" id="benSourceAccId" placeholder="Account ID" required>
+                                <label>Your Source Account</label>
+                                <select id="benSourceAccId" required>
+                                    <option value="">Select your account...</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label>Beneficiary Account Number</label>
                                 <input type="text" id="benTargetAccNum" placeholder="e.g. 1012345678" required>
                             </div>
                             <div class="form-group">
-                                <label>Nickname</label>
-                                <input type="text" id="benNickname" placeholder="e.g. Priya Savings" required>
+                                <label>Nickname / Payee Name</label>
+                                <input type="text" id="benNickname" placeholder="e.g. Priya Sharma, Rent Account" required>
                             </div>
                         </div>
-                        <button type="submit" class="btn">Save Beneficiary</button>
+                        <button type="submit" class="btn">Save & Whitelist Beneficiary</button>
                     </form>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">Whitelisted Beneficiaries</div>
-                        <button class="btn btn-outline" onclick="fetchBeneficiaries()">Refresh</button>
+                        <button class="btn btn-outline" onclick="fetchBeneficiaries()">Refresh Payees</button>
                     </div>
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Nickname</th>
-                                <th>Account Number</th>
+                                <th>Beneficiary Account Number</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -542,7 +733,64 @@
                 </div>
             </div>
 
-            <!-- TAB 4: STAFF APPROVAL QUEUE -->
+            <!-- TAB 6: STAFF EXECUTIVE DASHBOARD -->
+            <div class="tab-panel" id="dashboardTab">
+                <div class="stat-grid" id="staffMetricsGrid">
+                    <div class="stat-card">
+                        <span class="stat-label">Pending Account Approvals</span>
+                        <span class="stat-val" id="metricPendingAcc">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Unreviewed AML Flagged Tx</span>
+                        <span class="stat-val" id="metricFlaggedTx" style="color: var(--danger);">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Frozen Accounts</span>
+                        <span class="stat-val" id="metricFrozenAcc" style="color: var(--warning);">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Recent Activity Count</span>
+                        <span class="stat-val" id="metricRecentTx">0</span>
+                    </div>
+                </div>
+
+                <!-- Admin Interest Calculation Action Card -->
+                <div class="card" id="adminInterestCard" style="display: none; margin-bottom: 24px;">
+                    <div class="card-header">
+                        <div class="card-title">Automated Savings Interest Accrual Job (Module 11)</div>
+                        <button class="btn" onclick="runInterestJob()">Execute Monthly Interest Job</button>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">
+                        Calculates and credits monthly interest (4% p.a. standard) to all active savings accounts with atomic ledger recording. Restricted to Administrator role.
+                    </p>
+                    <div id="interestJobResult" style="margin-top: 12px; font-size: 0.85rem;"></div>
+                </div>
+
+                <!-- Recent Transactions Live Feed -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Live Transaction Activity Stream (Last 10 Events)</div>
+                        <button class="btn btn-outline" onclick="fetchDashboardMetrics()">Refresh Stream</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date / Time</th>
+                                <th>Tx ID</th>
+                                <th>Account</th>
+                                <th>Type</th>
+                                <th>Amount (₹)</th>
+                                <th>Status / AML Flag</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardRecentTxBody">
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading transactions stream...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 7: STAFF APPROVAL QUEUE -->
             <div class="tab-panel" id="staffTab">
                 <!-- Module 1: Customer Onboarding & KYC Queue -->
                 <div class="card" style="margin-bottom: 24px;">
@@ -596,7 +844,36 @@
                 </div>
             </div>
 
-            <!-- TAB 5: CONSOLE -->
+            <!-- TAB 8: AML FLAGGED TRANSACTIONS QUEUE -->
+            <div class="tab-panel" id="flaggedTab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Anti-Money Laundering (AML) Flagged Transactions Review (Module 9)</div>
+                        <button class="btn btn-outline" onclick="fetchFlaggedTransactions()">Refresh Flagged Queue</button>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                        High-value transactions (amounts exceeding ₹10,000) automatically flagged by the rule engine. Compliance officers and staff can review and record regulatory audit remarks.
+                    </p>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Flagged Date</th>
+                                <th>Transaction ID</th>
+                                <th>Account</th>
+                                <th>Amount (₹)</th>
+                                <th>Flag Reason</th>
+                                <th>Review Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="flaggedTableBody">
+                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No flagged transactions.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 9: CONSOLE -->
             <div class="tab-panel" id="consoleTab">
                 <div class="card">
                     <div class="card-header">
@@ -615,6 +892,8 @@
         const API_BASE = window.location.port === '3000' ? 'http://localhost:5000/api' : '/api';
         let authToken = localStorage.getItem('token') || '';
         let currentUser = null;
+        let cachedAccounts = [];
+        let cachedBeneficiaries = [];
 
         function renderTabs() {
             const tabBar = document.getElementById('tabBar');
@@ -625,16 +904,20 @@
 
             if (currentUser.role === 'staff' || currentUser.role === 'admin') {
                 tabBar.innerHTML = `
-                    <button class="tab-btn active" id="btn-staffTab" onclick="switchTab('staffTab')">Staff Review Queue</button>
-                    <button class="tab-btn" id="btn-accountsTab" onclick="switchTab('accountsTab')">All Accounts</button>
-                    <button class="tab-btn" id="btn-profileTab" onclick="switchTab('profileTab')">User Profile</button>
+                    <button class="tab-btn active" id="btn-dashboardTab" onclick="switchTab('dashboardTab')">Executive Dashboard</button>
+                    <button class="tab-btn" id="btn-staffTab" onclick="switchTab('staffTab')">Review Queues</button>
+                    <button class="tab-btn" id="btn-accountsTab" onclick="switchTab('accountsTab')">All Accounts & Controls</button>
+                    <button class="tab-btn" id="btn-flaggedTab" onclick="switchTab('flaggedTab')">AML Flagged Review</button>
+                    <button class="tab-btn" id="btn-profileTab" onclick="switchTab('profileTab')">My Profile</button>
                     <button class="tab-btn" id="btn-consoleTab" onclick="switchTab('consoleTab')">API Console</button>
                 `;
             } else {
                 tabBar.innerHTML = `
-                    <button class="tab-btn active" id="btn-profileTab" onclick="switchTab('profileTab')">User Profile & KYC</button>
-                    <button class="tab-btn" id="btn-accountsTab" onclick="switchTab('accountsTab')">Accounts & Application</button>
+                    <button class="tab-btn active" id="btn-accountsTab" onclick="switchTab('accountsTab')">My Accounts</button>
+                    <button class="tab-btn" id="btn-transfersTab" onclick="switchTab('transfersTab')">Transfer Funds</button>
+                    <button class="tab-btn" id="btn-statementTab" onclick="switchTab('statementTab')">Statements & Ledger</button>
                     <button class="tab-btn" id="btn-beneficiariesTab" onclick="switchTab('beneficiariesTab')">Beneficiaries</button>
+                    <button class="tab-btn" id="btn-profileTab" onclick="switchTab('profileTab')">Profile & KYC</button>
                     <button class="tab-btn" id="btn-consoleTab" onclick="switchTab('consoleTab')">API Console</button>
                 `;
             }
@@ -650,10 +933,16 @@
             const activeBtn = document.getElementById(`btn-${tabId}`);
             if (activeBtn) activeBtn.classList.add('active');
 
-            if (tabId === 'profileTab' && authToken) fetchProfile();
-            if (tabId === 'accountsTab' && authToken) fetchAccounts();
-            if (tabId === 'beneficiariesTab' && authToken) fetchBeneficiaries();
-            if (tabId === 'staffTab' && authToken) {
+            if (!authToken) return;
+
+            if (tabId === 'dashboardTab') fetchDashboardMetrics();
+            if (tabId === 'profileTab') fetchProfile();
+            if (tabId === 'accountsTab') fetchAccounts();
+            if (tabId === 'transfersTab') setupTransferForm();
+            if (tabId === 'statementTab') setupStatementForm();
+            if (tabId === 'beneficiariesTab') fetchBeneficiaries();
+            if (tabId === 'flaggedTab') fetchFlaggedTransactions();
+            if (tabId === 'staffTab') {
                 fetchPendingAccounts();
                 fetchPendingKYC();
             }
@@ -663,6 +952,9 @@
             const authView = document.getElementById('authView');
             const appView = document.getElementById('appView');
             const authNav = document.getElementById('authNav');
+            const applyCard = document.getElementById('applyAccountCard');
+            const adminInterestCard = document.getElementById('adminInterestCard');
+            const accTitle = document.getElementById('accountsTitle');
 
             if (currentUser && authToken) {
                 authView.style.display = 'none';
@@ -674,11 +966,21 @@
                     <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;" onclick="logout()">Sign Out</button>
                 `;
 
+                if (applyCard) {
+                    applyCard.style.display = (currentUser.role === 'customer') ? 'block' : 'none';
+                }
+                if (accTitle) {
+                    accTitle.textContent = (currentUser.role === 'customer') ? 'My Registered Accounts' : 'Core Banking Accounts & Controls (Freeze/Unfreeze)';
+                }
+                if (adminInterestCard) {
+                    adminInterestCard.style.display = (currentUser.role === 'admin') ? 'block' : 'none';
+                }
+
                 renderTabs();
                 if (currentUser.role === 'staff' || currentUser.role === 'admin') {
-                    switchTab('staffTab');
+                    switchTab('dashboardTab');
                 } else {
-                    switchTab('profileTab');
+                    switchTab('accountsTab');
                 }
             } else {
                 authView.style.display = 'block';
@@ -756,7 +1058,6 @@
 
                 if (data.success) {
                     const token = data.data.token;
-                    // Automatically submit initial account application with the newly issued token
                     const accRes = await fetch(`${API_BASE}/accounts`, {
                         method: 'POST',
                         headers: {
@@ -806,6 +1107,9 @@
             }
         }
 
+        // ==========================================
+        // ACCOUNTS & FREEZE / UNFREEZE CONTROLS
+        // ==========================================
         async function fetchAccounts() {
             if (!authToken) return;
             try {
@@ -819,28 +1123,88 @@
                 tbody.innerHTML = '';
 
                 const accounts = data.data.accounts || data.data.items || [];
+                cachedAccounts = accounts;
+
                 if (accounts.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No accounts found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No accounts found.</td></tr>`;
                     return;
                 }
 
                 accounts.forEach(acc => {
                     const tr = document.createElement('tr');
+                    let actionHtml = '';
+
+                    if (currentUser.role === 'staff' || currentUser.role === 'admin') {
+                        if (acc.status === 'active') {
+                            actionHtml = `<button class="btn btn-warning" style="padding: 4px 8px; font-size: 0.75rem;" onclick="toggleFreeze('${acc._id}', 'freeze')">Freeze Account</button>`;
+                        } else if (acc.status === 'frozen') {
+                            actionHtml = `<button class="btn" style="padding: 4px 8px; font-size: 0.75rem; background-color: #0284c7;" onclick="toggleFreeze('${acc._id}', 'unfreeze')">Unfreeze Account</button>`;
+                        } else if (acc.status === 'pending') {
+                            actionHtml = `<button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="reviewAccount('${acc._id}', 'Approved')">Approve</button>`;
+                        } else {
+                            actionHtml = `<span style="color: var(--text-muted); font-size: 0.8rem;">None</span>`;
+                        }
+                    } else {
+                        if (acc.status === 'active') {
+                            actionHtml = `
+                                <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem; margin-right: 4px;" onclick="quickTransferFrom('${acc._id}')">Transfer</button>
+                                <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem;" onclick="quickStatementFor('${acc._id}')">Statement</button>
+                            `;
+                        } else if (acc.status === 'frozen') {
+                            actionHtml = `<span style="color: var(--danger); font-size: 0.75rem; font-weight: 600;">Account Frozen</span>`;
+                        } else {
+                            actionHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;">Pending Approval</span>`;
+                        }
+                    }
+
                     tr.innerHTML = `
                         <td><strong>${acc.accountNumber}</strong><br><small style="color: var(--text-muted); font-size:0.75rem;">${acc._id}</small></td>
                         <td style="text-transform: capitalize;">${acc.type}</td>
                         <td>₹${(acc.balance || 0).toLocaleString('en-IN')}</td>
                         <td>₹${(acc.dailyTransferLimit || 0).toLocaleString('en-IN')}</td>
                         <td><span class="badge badge-${acc.status}">${acc.status}</span></td>
+                        <td>${actionHtml}</td>
                     `;
-                    tr.onclick = () => {
-                        const targetInput = document.getElementById('benSourceAccId');
-                        if (targetInput) targetInput.value = acc._id;
-                    };
                     tbody.appendChild(tr);
                 });
+
+                updateBeneficiarySourceDropdown();
             } catch (err) {
                 console.error(err);
+            }
+        }
+
+        async function toggleFreeze(accountId, action) {
+            let reason = '';
+            if (action === 'freeze') {
+                reason = prompt('Enter audit reason for freezing this account:', 'Suspicious transaction pattern / regulatory compliance hold');
+                if (reason === null) return;
+                if (!reason.trim()) reason = 'Staff administrative hold';
+            } else {
+                if (!confirm('Are you sure you want to unfreeze this account and restore transaction capabilities?')) return;
+            }
+
+            try {
+                const endpoint = `${API_BASE}/accounts/${accountId}/${action}`;
+                const res = await fetch(endpoint, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: action === 'freeze' ? JSON.stringify({ reason }) : undefined
+                });
+                const data = await res.json();
+                logAPI('PUT', `/api/accounts/${accountId}/${action}`, res.status, data);
+
+                if (data.success) {
+                    alert(`Account successfully ${action === 'freeze' ? 'FROZEN' : 'UNFROZEN'}.`);
+                    fetchAccounts();
+                } else {
+                    alert(`Action Failed: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
             }
         }
 
@@ -877,6 +1241,578 @@
             }
         }
 
+        // ==========================================
+        // FUND TRANSFER ENGINE
+        // ==========================================
+        async function setupTransferForm() {
+            const select = document.getElementById('transferSourceAcc');
+            select.innerHTML = '<option value="">Select your active account...</option>';
+
+            if (!cachedAccounts || cachedAccounts.length === 0) {
+                await fetchAccounts();
+            }
+
+            const activeAccs = cachedAccounts.filter(a => a.status === 'active');
+            activeAccs.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a._id;
+                opt.textContent = `A/C ${a.accountNumber} (${a.type.toUpperCase()}) - Balance: ₹${(a.balance || 0).toLocaleString('en-IN')}`;
+                opt.dataset.balance = a.balance;
+                opt.dataset.accNum = a.accountNumber;
+                select.appendChild(opt);
+            });
+
+            if (activeAccs.length > 0) {
+                select.selectedIndex = 1;
+                updateTransferSourceBalance();
+            }
+
+            loadTransferBeneficiaryOptions();
+        }
+
+        function updateTransferSourceBalance() {
+            const select = document.getElementById('transferSourceAcc');
+            const text = document.getElementById('transferSourceBalanceText');
+            const selectedOpt = select.options[select.selectedIndex];
+
+            if (selectedOpt && selectedOpt.dataset.balance !== undefined) {
+                text.textContent = `Available Balance: ₹${Number(selectedOpt.dataset.balance).toLocaleString('en-IN')}`;
+                refreshTransferTransactions();
+            } else {
+                text.textContent = '';
+            }
+        }
+
+        async function loadTransferBeneficiaryOptions() {
+            const benSelect = document.getElementById('transferBeneficiarySelect');
+            if (!benSelect) return;
+            benSelect.innerHTML = '<option value="">-- Choose saved payee --</option>';
+
+            try {
+                const res = await fetch(`${API_BASE}/beneficiaries`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                if (data.success && data.data.beneficiaries) {
+                    cachedBeneficiaries = data.data.beneficiaries;
+                    data.data.beneficiaries.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.beneficiaryAccountNumber;
+                        opt.textContent = `${b.nickname} (${b.beneficiaryAccountNumber})`;
+                        benSelect.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function fillTargetFromBeneficiary(accNum) {
+            if (accNum) {
+                document.getElementById('transferTargetAccNum').value = accNum;
+            }
+        }
+
+        async function handleTransfer(e) {
+            e.preventDefault();
+            const sourceAccId = document.getElementById('transferSourceAcc').value;
+            const targetAccNum = document.getElementById('transferTargetAccNum').value.trim();
+            const amount = Number(document.getElementById('transferAmount').value);
+            const description = document.getElementById('transferDesc').value.trim();
+            const noticeBox = document.getElementById('transferResultNotice');
+
+            if (!sourceAccId) return alert('Please select a source account.');
+            if (!targetAccNum) return alert('Please specify a target account number.');
+            if (!amount || amount <= 0) return alert('Please specify a valid transfer amount.');
+
+            const btn = document.getElementById('btnSubmitTransfer');
+            btn.disabled = true;
+            btn.textContent = 'Processing Transfer...';
+
+            try {
+                const res = await fetch(`${API_BASE}/transactions/transfer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        fromAccountId: sourceAccId,
+                        toAccountNumber: targetAccNum,
+                        amount,
+                        description: description || 'Domestic Transfer'
+                    })
+                });
+                const data = await res.json();
+                logAPI('POST', '/api/transactions/transfer', res.status, data);
+
+                noticeBox.style.display = 'block';
+
+                if (data.success) {
+                    const tx = data.data.debitTransaction || data.data;
+                    const isFlagged = data.data.flagged || tx.flagged;
+
+                    let statusNotice = `
+                        <div style="background-color: #dcfce7; border-left: 4px solid var(--success); padding: 12px 16px; border-radius: 4px; color: #15803d; font-size: 0.9rem;">
+                            <strong>Transfer Successful!</strong> Transferred ₹${amount.toLocaleString('en-IN')} to Account ${targetAccNum}.<br>
+                            Transaction Reference: <code>${tx.reference || tx._id}</code>.
+                        </div>
+                    `;
+
+                    if (isFlagged) {
+                        statusNotice += `
+                            <div style="background-color: #fef2f2; border-left: 4px solid var(--danger); padding: 12px 16px; border-radius: 4px; color: #b91c1c; font-size: 0.85rem; margin-top: 10px;">
+                                ⚠️ <strong>AML Rule Alert:</strong> Transfer amount exceeds ₹10,000 threshold. Transaction has been automatically flagged for Staff AML Compliance Review.
+                            </div>
+                        `;
+                    }
+
+                    noticeBox.innerHTML = statusNotice;
+                    document.getElementById('transferAmount').value = '';
+                    document.getElementById('transferDesc').value = '';
+
+                    await fetchAccounts();
+                    setupTransferForm();
+                } else {
+                    noticeBox.innerHTML = `
+                        <div style="background-color: #fee2e2; border-left: 4px solid var(--danger); padding: 12px 16px; border-radius: 4px; color: #b91c1c; font-size: 0.9rem;">
+                            <strong>Transfer Failed:</strong> ${data.message}
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Execute Transfer';
+            }
+        }
+
+        async function refreshTransferTransactions() {
+            const select = document.getElementById('transferSourceAcc');
+            const sourceAccId = select.value;
+            const tbody = document.getElementById('transferRecentTxBody');
+
+            if (!sourceAccId) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Select an account to view recent transactions.</td></tr>`;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/accounts/${sourceAccId}/transactions?limit=10`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', `/api/accounts/${sourceAccId}/transactions`, res.status, data);
+
+                tbody.innerHTML = '';
+                const txs = (data.data && data.data.items) ? data.data.items : [];
+
+                if (txs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No transaction activity on this account yet.</td></tr>`;
+                    return;
+                }
+
+                txs.forEach(tx => {
+                    const tr = document.createElement('tr');
+                    const d = new Date(tx.createdAt).toLocaleString('en-IN');
+                    const isFlagged = tx.flagged;
+                    tr.innerHTML = `
+                        <td>${d}</td>
+                        <td>${tx.description || 'Transfer'}</td>
+                        <td><span class="badge badge-${tx.type}">${tx.type}</span></td>
+                        <td><strong>${tx.type === 'debit' ? '-' : '+'}₹${tx.amount.toLocaleString('en-IN')}</strong></td>
+                        <td>₹${(tx.balanceAfter || 0).toLocaleString('en-IN')}</td>
+                        <td>${isFlagged ? '<span class="badge badge-flagged">AML FLAGGED</span>' : '<span class="badge badge-active">CLEARED</span>'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function quickTransferFrom(accId) {
+            switchTab('transfersTab');
+            const select = document.getElementById('transferSourceAcc');
+            select.value = accId;
+            updateTransferSourceBalance();
+        }
+
+        function quickTransferTo(targetAccNum) {
+            switchTab('transfersTab');
+            document.getElementById('transferTargetAccNum').value = targetAccNum;
+        }
+
+        // ==========================================
+        // STATEMENTS & LEDGER
+        // ==========================================
+        async function setupStatementForm() {
+            const select = document.getElementById('statementAccSelect');
+            select.innerHTML = '<option value="">Select account...</option>';
+
+            if (!cachedAccounts || cachedAccounts.length === 0) {
+                await fetchAccounts();
+            }
+
+            cachedAccounts.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a._id;
+                opt.textContent = `A/C ${a.accountNumber} (${a.type.toUpperCase()}) - ₹${(a.balance || 0).toLocaleString('en-IN')}`;
+                select.appendChild(opt);
+            });
+
+            if (cachedAccounts.length > 0) {
+                select.selectedIndex = 1;
+            }
+
+            const today = new Date();
+            const past30 = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            document.getElementById('statementFromDate').value = past30.toISOString().split('T')[0];
+            document.getElementById('statementToDate').value = today.toISOString().split('T')[0];
+        }
+
+        async function handleGenerateStatement(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const accId = document.getElementById('statementAccSelect').value;
+            const from = document.getElementById('statementFromDate').value;
+            const to = document.getElementById('statementToDate').value;
+
+            if (!accId) return alert('Please select an account.');
+            if (!from || !to) return alert('Please select a valid date range.');
+
+            try {
+                const res = await fetch(`${API_BASE}/accounts/${accId}/statement?from=${from}&to=${to}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', `/api/accounts/${accId}/statement`, res.status, data);
+
+                if (!data.success) {
+                    alert(`Statement Error: ${data.message}`);
+                    return;
+                }
+
+                const s = data.data.summary;
+                const account = data.data.account;
+                const txs = data.data.transactions || [];
+
+                document.getElementById('statementSummarySection').style.display = 'block';
+                document.getElementById('statOpening').textContent = `₹${(s.openingBalance || 0).toLocaleString('en-IN')}`;
+                document.getElementById('statCredits').textContent = `+₹${(s.totalCredits || 0).toLocaleString('en-IN')}`;
+                document.getElementById('statDebits').textContent = `-₹${(s.totalDebits || 0).toLocaleString('en-IN')}`;
+                document.getElementById('statNet').textContent = `${s.netChange >= 0 ? '+' : ''}₹${(s.netChange || 0).toLocaleString('en-IN')}`;
+                document.getElementById('statClosing').textContent = `₹${(s.closingBalance || 0).toLocaleString('en-IN')}`;
+                document.getElementById('statementTableTitle').textContent = `Itemized Ledger for A/C ${account.accountNumber} (${from} to ${to})`;
+
+                const tbody = document.getElementById('statementTableBody');
+                tbody.innerHTML = '';
+
+                if (txs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No transactions recorded in this date period.</td></tr>`;
+                    return;
+                }
+
+                txs.forEach(tx => {
+                    const tr = document.createElement('tr');
+                    const d = new Date(tx.createdAt).toLocaleString('en-IN');
+                    tr.innerHTML = `
+                        <td>${d}</td>
+                        <td><code>${tx.reference || tx._id}</code></td>
+                        <td>${tx.description || 'Transfer'}</td>
+                        <td><span class="badge badge-${tx.type}">${tx.type}</span></td>
+                        <td><strong>${tx.type === 'debit' ? '-' : '+'}₹${tx.amount.toLocaleString('en-IN')}</strong></td>
+                        <td>₹${(tx.balanceAfter || 0).toLocaleString('en-IN')}</td>
+                        <td>${tx.flagged ? '<span class="badge badge-flagged">AML FLAGGED</span>' : '<span class="badge badge-active">CLEARED</span>'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        function quickStatementFor(accId) {
+            switchTab('statementTab');
+            document.getElementById('statementAccSelect').value = accId;
+            handleGenerateStatement();
+        }
+
+        // ==========================================
+        // BENEFICIARIES WHITELIST & QUICK PAY
+        // ==========================================
+        function updateBeneficiarySourceDropdown() {
+            const select = document.getElementById('benSourceAccId');
+            if (!select) return;
+            select.innerHTML = '<option value="">Select your account...</option>';
+
+            const activeAccs = cachedAccounts.filter(a => a.status === 'active');
+            activeAccs.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a._id;
+                opt.textContent = `A/C ${a.accountNumber} (${a.type.toUpperCase()}) - ₹${(a.balance || 0).toLocaleString('en-IN')}`;
+                select.appendChild(opt);
+            });
+            if (activeAccs.length > 0) select.selectedIndex = 1;
+        }
+
+        async function fetchBeneficiaries() {
+            if (!authToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/beneficiaries`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', '/api/beneficiaries', res.status, data);
+
+                const tbody = document.getElementById('beneficiariesTableBody');
+                tbody.innerHTML = '';
+
+                const bens = (data.data && data.data.beneficiaries) ? data.data.beneficiaries : [];
+                cachedBeneficiaries = bens;
+
+                if (bens.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No beneficiaries registered.</td></tr>`;
+                    return;
+                }
+
+                bens.forEach(b => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${b.nickname}</strong></td>
+                        <td>${b.beneficiaryAccountNumber}</td>
+                        <td>
+                            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.75rem; margin-right: 6px;" onclick="quickTransferTo('${b.beneficiaryAccountNumber}')">Send Money</button>
+                            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="deleteBeneficiary('${b._id}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                updateBeneficiarySourceDropdown();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function handleAddBeneficiary(e) {
+            e.preventDefault();
+            const sourceAccId = document.getElementById('benSourceAccId').value;
+            const targetAccNum = document.getElementById('benTargetAccNum').value.trim();
+            const nickname = document.getElementById('benNickname').value.trim();
+
+            if (!sourceAccId) return alert('Please select your source account.');
+            if (!targetAccNum) return alert('Please specify a beneficiary account number.');
+            if (!nickname) return alert('Please enter a nickname for the payee.');
+
+            try {
+                const res = await fetch(`${API_BASE}/beneficiaries`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        accountId: sourceAccId,
+                        beneficiaryAccountNumber: targetAccNum,
+                        nickname
+                    })
+                });
+                const data = await res.json();
+                logAPI('POST', '/api/beneficiaries', res.status, data);
+
+                if (data.success) {
+                    alert('Beneficiary whitelisted successfully!');
+                    document.getElementById('benTargetAccNum').value = '';
+                    document.getElementById('benNickname').value = '';
+                    fetchBeneficiaries();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function deleteBeneficiary(id) {
+            if (!confirm('Remove this beneficiary from your whitelist?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/beneficiaries/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('DELETE', `/api/beneficiaries/${id}`, res.status, data);
+
+                if (data.success) {
+                    alert('Beneficiary deleted.');
+                    fetchBeneficiaries();
+                } else {
+                    alert(err.message);
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // ==========================================
+        // STAFF EXECUTIVE DASHBOARD & AGGREGATE METRICS
+        // ==========================================
+        async function fetchDashboardMetrics() {
+            if (!authToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/staff/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', '/api/staff/dashboard', res.status, data);
+
+                if (data.success) {
+                    const metrics = data.data;
+                    document.getElementById('metricPendingAcc').textContent = metrics.pendingAccountApprovals || 0;
+                    document.getElementById('metricFlaggedTx').textContent = metrics.unreviewedFlaggedTransactions || 0;
+                    document.getElementById('metricFrozenAcc').textContent = metrics.frozenAccounts || 0;
+                    document.getElementById('metricRecentTx').textContent = (metrics.recentTransactions || []).length;
+
+                    const tbody = document.getElementById('dashboardRecentTxBody');
+                    tbody.innerHTML = '';
+
+                    const txs = metrics.recentTransactions || [];
+                    if (txs.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No recent transactions recorded.</td></tr>`;
+                        return;
+                    }
+
+                    txs.forEach(tx => {
+                        const tr = document.createElement('tr');
+                        const d = new Date(tx.createdAt).toLocaleString('en-IN');
+                        tr.innerHTML = `
+                            <td>${d}</td>
+                            <td><code>${tx.reference || tx._id}</code></td>
+                            <td>${tx.accountId?.accountNumber || tx.accountId || 'A/C'}</td>
+                            <td><span class="badge badge-${tx.type}">${tx.type}</span></td>
+                            <td>₹${(tx.amount || 0).toLocaleString('en-IN')}</td>
+                            <td>${tx.flagged ? '<span class="badge badge-flagged">AML FLAGGED</span>' : '<span class="badge badge-active">CLEARED</span>'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function runInterestJob() {
+            if (!confirm('Execute monthly savings account interest calculation job now?')) return;
+            const resultBox = document.getElementById('interestJobResult');
+            resultBox.innerHTML = '<span style="color: var(--text-muted);">Executing interest batch job across all active savings accounts...</span>';
+
+            try {
+                const res = await fetch(`${API_BASE}/staff/run-interest-job`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const data = await res.json();
+                logAPI('POST', '/api/staff/run-interest-job', res.status, data);
+
+                if (data.success) {
+                    const sum = data.data.summary;
+                    resultBox.innerHTML = `
+                        <div style="background-color: #dcfce7; border-left: 4px solid var(--success); padding: 10px 14px; border-radius: 4px; color: #15803d;">
+                            <strong>Interest Accrual Completed:</strong> Processed ${sum.processedCount} savings accounts. Total Interest Credited: <strong>₹${(sum.totalInterestCredited || 0).toLocaleString('en-IN')}</strong>.
+                        </div>
+                    `;
+                    fetchDashboardMetrics();
+                } else {
+                    resultBox.innerHTML = `<span style="color: var(--danger);">Failed: ${data.message}</span>`;
+                }
+            } catch (err) {
+                resultBox.innerHTML = `<span style="color: var(--danger);">Error: ${err.message}</span>`;
+            }
+        }
+
+        // ==========================================
+        // AML FLAGGED TRANSACTIONS QUEUE (MODULE 9)
+        // ==========================================
+        async function fetchFlaggedTransactions() {
+            if (!authToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/staff/flagged-transactions`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                logAPI('GET', '/api/staff/flagged-transactions', res.status, data);
+
+                const tbody = document.getElementById('flaggedTableBody');
+                tbody.innerHTML = '';
+
+                const txs = (data.data && data.data.items) ? data.data.items : [];
+                if (txs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No flagged transactions requiring review.</td></tr>`;
+                    return;
+                }
+
+                txs.forEach(tx => {
+                    const tr = document.createElement('tr');
+                    const d = new Date(tx.createdAt).toLocaleString('en-IN');
+                    const accNum = tx.accountId?.accountNumber || tx.accountId || 'N/A';
+                    const isReviewed = tx.reviewed;
+
+                    tr.innerHTML = `
+                        <td>${d}</td>
+                        <td><code>${tx.reference || tx._id}</code></td>
+                        <td><strong>${accNum}</strong></td>
+                        <td style="color: var(--danger); font-weight: 700;">₹${(tx.amount || 0).toLocaleString('en-IN')}</td>
+                        <td>${tx.flagReason || 'Transaction > ₹10,000 threshold'}</td>
+                        <td><span class="badge badge-${isReviewed ? 'active' : 'flagged'}">${isReviewed ? 'REVIEWED' : 'PENDING AUDIT'}</span></td>
+                        <td>
+                            ${isReviewed 
+                                ? `<small style="color: var(--text-muted);">${tx.reviewRemarks || 'Audited'}</small>` 
+                                : `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.75rem;" onclick="reviewFlaggedTx('${tx._id}')">Audit & Clear</button>`
+                            }
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function reviewFlaggedTx(txId) {
+            const remarks = prompt('Enter Compliance Officer audit notes for this transaction:', 'Customer source of funds verified. Transaction cleared.');
+            if (remarks === null) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/staff/flagged-transactions/${txId}/review`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ remarks })
+                });
+                const data = await res.json();
+                logAPI('PUT', `/api/staff/flagged-transactions/${txId}/review`, res.status, data);
+
+                if (data.success) {
+                    alert('Transaction marked as reviewed and cleared in compliance audit trail.');
+                    fetchFlaggedTransactions();
+                    fetchDashboardMetrics();
+                } else {
+                    alert(`Review Failed: ${data.message}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        // ==========================================
+        // STAFF APPLICATION & KYC QUEUES
+        // ==========================================
         async function fetchPendingAccounts() {
             if (!authToken) return;
             try {
@@ -1006,98 +1942,15 @@
             }
         }
 
-        async function fetchBeneficiaries() {
-            if (!authToken) return;
-            try {
-                const res = await fetch(`${API_BASE}/beneficiaries`, {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                const data = await res.json();
-                logAPI('GET', '/api/beneficiaries', res.status, data);
-
-                const tbody = document.getElementById('beneficiariesTableBody');
-                tbody.innerHTML = '';
-
-                const bens = (data.data && data.data.beneficiaries) ? data.data.beneficiaries : [];
-                if (bens.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No beneficiaries registered.</td></tr>`;
-                    return;
-                }
-
-                bens.forEach(b => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>${b.nickname}</strong></td>
-                        <td>${b.beneficiaryAccountNumber}</td>
-                        <td>
-                            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="deleteBeneficiary('${b._id}')">Delete</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        async function handleAddBeneficiary(e) {
-            e.preventDefault();
-            const body = {
-                accountId: document.getElementById('benSourceAccId').value,
-                beneficiaryAccountNumber: document.getElementById('benTargetAccNum').value,
-                nickname: document.getElementById('benNickname').value
-            };
-
-            try {
-                const res = await fetch(`${API_BASE}/beneficiaries`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify(body)
-                });
-                const data = await res.json();
-                logAPI('POST', '/api/beneficiaries', res.status, data);
-
-                if (data.success) {
-                    alert('Beneficiary registered.');
-                    fetchBeneficiaries();
-                } else {
-                    alert(`Error: ${data.message}`);
-                }
-            } catch (err) {
-                alert(`Error: ${err.message}`);
-            }
-        }
-
-        async function deleteBeneficiary(id) {
-            if (!confirm('Remove this beneficiary?')) return;
-            try {
-                const res = await fetch(`${API_BASE}/beneficiaries/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                const data = await res.json();
-                logAPI('DELETE', `/api/beneficiaries/${id}`, res.status, data);
-
-                if (data.success) {
-                    alert('Beneficiary deleted.');
-                    fetchBeneficiaries();
-                }
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-
         function logout() {
             localStorage.removeItem('token');
             authToken = '';
             currentUser = null;
+            cachedAccounts = [];
+            cachedBeneficiaries = [];
             updateViewState();
         }
 
-        // Initialize view on load
         (async function init() {
             if (authToken) {
                 try {
